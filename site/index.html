@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rendement des OAT</title>
+<meta name="description" content="Toutes les OAT françaises cotées sur Euronext Paris et leur rendement annuel si on les garde jusqu'à l'échéance.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>Rendement des OAT à l'échéance</h1>
+    <p class="lede">Obligations de l'État français cotées sur Euronext Paris : quel rendement annuel si j'achète au dernier cours et que je garde le titre jusqu'à son terme ?</p>
+  </header>
+
+  <section class="controls" aria-label="Filtres">
+    <div class="horizon">
+      <label for="n">Horizon : <strong><output id="n-out">5</output> ans</strong></label>
+      <input id="n" type="range" min="1" max="50" step="1" value="5">
+      <div class="window">
+        <label for="w">Échéance à</label>
+        <select id="w">
+          <option value="0.5">± 6 mois</option>
+          <option value="1" selected>± 1 an</option>
+          <option value="2">± 2 ans</option>
+          <option value="all">toutes les échéances</option>
+        </select>
+      </div>
+    </div>
+    <fieldset>
+      <legend>Titres</legend>
+      <label><input type="checkbox" name="kind" value="nominale" checked> OAT classiques</label>
+      <label><input type="checkbox" name="kind" value="strip"> Strips (démembrés)</label>
+      <label><input type="checkbox" name="kind" value="indexee_euro"> OAT€i (inflation zone euro)</label>
+      <label><input type="checkbox" name="kind" value="indexee_france"> OATi (inflation France)</label>
+      <label><input type="checkbox" id="fresh" checked> Masquer les cours de plus de 30 jours</label>
+    </fieldset>
+  </section>
+
+  <p id="summary" class="summary" aria-live="polite"></p>
+
+  <div class="table-wrap">
+    <table id="table">
+      <thead>
+        <tr>
+          <th data-key="name">Titre</th>
+          <th data-key="maturity">Échéance</th>
+          <th data-key="years" class="num">Durée</th>
+          <th data-key="coupon" class="num">Coupon</th>
+          <th data-key="price" class="num">Dernier cours</th>
+          <th data-key="last_trade">Date du cours</th>
+          <th data-key="ytm" class="num">Rendement annuel</th>
+          <th data-key="ytm" class="num">1 000 € deviennent</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <section class="notes">
+    <h2>Comment lire ce tableau</h2>
+    <ul>
+      <li><strong>Rendement annuel</strong> : taux actuariel brut. C'est le rendement annuel obtenu en achetant au dernier cours affiché, en encaissant les coupons et en étant remboursé à 100 % à l'échéance. Il suppose les coupons réinvestis au même taux. Calcul en base exact/exact, règlement à J+2, coupon couru inclus.</li>
+      <li><strong>1 000 € deviennent</strong> : valeur à l'échéance de 1 000 € investis à ce rendement.</li>
+      <li><strong>Avant frais et impôts</strong> : ni les frais de courtage ni la fiscalité (PFU de 30 % sur coupons et plus-values) ne sont déduits.</li>
+      <li><strong>Dernier cours ≠ prix d'achat</strong> : le prix auquel vous achèterez dépend du carnet d'ordres (écart achat/vente), en particulier sur les titres peu échangés. Vérifiez la date du cours.</li>
+      <li><strong>OATi / OAT€i</strong> : le rendement affiché est un rendement <em>réel</em>, qui s'ajoute à l'inflation.</li>
+    </ul>
+    <p class="source">Données : cours <a href="https://live.euronext.com/fr/products/fixed-income/paris/list">Euronext Paris</a>, caractéristiques des titres <a href="https://www.openfigi.com/">OpenFIGI</a>. Mise à jour chaque soir de semaine. <span id="updated"></span> Ceci n'est pas un conseil en investissement.</p>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
