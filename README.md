@@ -2,7 +2,7 @@
 
 Mini-application qui liste toutes les OAT (obligations de l'État français) cotées sur Euronext Paris et calcule leur **rendement annuel si on les garde jusqu'à l'échéance** (taux actuariel). On choisit un horizon de *n* ans et la page affiche les titres qui arrivent à échéance autour de cet horizon.
 
-**En ligne : https://monsieurpou.github.io/oat-rendements/**
+**En ligne : https://thomas-pourbaix.github.io/oat-rendements/**
 
 ## Fonctionnement
 

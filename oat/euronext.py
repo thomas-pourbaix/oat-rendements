@@ -12,7 +12,7 @@ from datetime import date, datetime
 import requests
 
 URL = "https://live.euronext.com/fr/product_directory/data/bonds-paris?mics=ALXP%2CXMLI%2CXPAR"
-USER_AGENT = "Mozilla/5.0 (compatible; oat-rendements; +https://github.com/MonsieurPou/oat-rendements)"
+USER_AGENT = "Mozilla/5.0 (compatible; oat-rendements; +https://github.com/thomas-pourbaix/oat-rendements)"
 ISSUER = "REPUBLIC OF FRANCE"
 PAGE_SIZE = 1000
 
