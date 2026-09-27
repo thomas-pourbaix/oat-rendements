@@ -28,3 +28,9 @@ python3 -m http.server 8765 -d site
 - Rendement **brut** : ni frais de courtage ni fiscalité.
 - Pour les OATi / OAT€i, le rendement affiché est un rendement réel (hors inflation).
 - Pas un conseil en investissement.
+
+## Licence
+
+Copyright (C) 2026 Thomas Pourbaix
+
+Ce programme est un logiciel libre, distribué sous licence [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only). Toute version modifiée mise à disposition, y compris via un service en ligne, doit publier son code source sous la même licence.
