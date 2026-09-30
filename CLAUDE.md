@@ -7,7 +7,9 @@ messages) except what the user sees: page labels and texts in `site/` stay in Fr
 
 ## Git
 
+- Work directly on `main`: no feature branch, no pull request.
 - Push without asking once the tests pass: no need to wait for Thomas's go-ahead.
+  A push to `main` publishes the site, so check the deploy run afterwards.
 - `CHANGELOG.md` (Keep a Changelog): fill in the "Unreleased" section in the same commit as the change.
 
 ## Tests
