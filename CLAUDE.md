@@ -13,4 +13,6 @@ messages) except what the user sees: page labels and texts in `site/` stay in Fr
 ## Tests
 
 Every test is tied to an invariant of `INVARIANTS.md` (`INV-XXX` in the test class docstring).
-Run `python -m pytest -q` before committing.
+Run `python -m pytest -q` before committing: it also runs the page tests in Chromium
+(`tests/test_page.py`). Where `playwright install` is not possible, point
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE` at a preinstalled Chromium.

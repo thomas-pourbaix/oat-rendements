@@ -13,12 +13,15 @@ Small web app listing every OAT (French government bond) listed on Euronext Pari
    - the result is written to `site/data/oats.json`.
 2. The `site/` folder (static HTML/JS) is published on GitHub Pages; filtering by horizon happens in the browser.
 
+Tests: pytest for the Python code, and [Playwright](https://playwright.dev/python/) (through pytest) for the page, which runs in a real Chromium on a hand-made data set.
+
 Expected behaviour is catalogued in [INVARIANTS.md](INVARIANTS.md), changes in [CHANGELOG.md](CHANGELOG.md).
 
 ## Running locally
 
 ```bash
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt pytest
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+.venv/bin/python -m playwright install chromium
 .venv/bin/python -m pytest -q
 .venv/bin/python -m oat.build
 python3 -m http.server 8765 -d site

@@ -7,7 +7,7 @@
 > Do not read the code to write a test: read the invariant and write the test that checks
 > **that** rule. If an invariant is ambiguous, raise a question rather than interpreting the code.
 
-**Scope**: yield computation (`oat/yields.py`) and Euronext data fetching (`oat/euronext.py`).
+**Scope**: yield computation (`oat/yields.py`), Euronext data fetching (`oat/euronext.py`) and the page (`site/`).
 
 **Legend**: criticality `C` / `H` / `M` / `L` · status ✅ verified · ⚠️ partial · ❌ untested (debt) · 🐛 known bug.
 
@@ -55,3 +55,29 @@ The directory API intermittently answers `{"iTotalRecords": null, "aaData": []}`
 retried; if it persists, the build fails instead of publishing a truncated list.
 - **Why**: stopping on it silently drops every bond on the following pages.
 - **Coverage**: `tests/test_euronext.py::TestEmptyPageIsNeverTakenAsEndOfList`.
+
+## 3. Page
+
+Checked in a real browser on the hand-made data set of `tests/conftest.py`.
+
+### INV-007 [H] ✅ The table shows exactly the bonds in the horizon window, of a checked kind
+A bond is shown if and only if its kind is checked and `|years - horizon| <= window`
+(freshness filter aside, cf. INV-008).
+- **Why**: it is the page's question ("what can I buy for this horizon?"); a missing bond is a missed
+  option, an extra one a wrong answer.
+- **Coverage**: `tests/test_page.py::TestShownBondsMatchTheHorizonWindowAndKinds`.
+
+### INV-008 [H] ✅ With the freshness filter on, no quote older than 30 days or unknown is shown
+A bond whose last trade is older than 30 days, or has no known last trade, is hidden.
+- **Why**: a yield computed on an old price says nothing about today's buying price.
+- **Coverage**: `tests/test_page.py::TestFreshFilterHidesOldOrMissingQuotes`.
+- **Note**: this filter hid almost every OAT when the trade date was lost upstream (cf. INV-005).
+
+### INV-009 [M] ✅ The best yield announced and highlighted is the highest among the shown bonds
+- **Why**: the summary line is what the user reads first.
+- **Coverage**: `tests/test_page.py::TestBestYieldIsTheHighestShown`.
+
+### INV-010 [M] ✅ Clicking an ISIN copies exactly that ISIN to the clipboard
+The ISIN is shown again afterwards.
+- **Why**: the ISIN is what the user types into their broker's order form.
+- **Coverage**: `tests/test_page.py::TestClickingAnIsinCopiesIt`.
