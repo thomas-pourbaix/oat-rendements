@@ -14,7 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 - Bonds traded on the day of the build lost their last trade date (Euronext swaps the date and time layout for them), so the 30-day filter hid almost every nominal OAT.
-- An intermittent empty page from the Euronext API silently truncated the bond list; it is now retried, and the build fails if it persists.
+- An intermittent empty page from the Euronext API silently truncated the bond list; it is now retried for about 7 minutes (10 attempts), and the build fails if it persists.
 
 ### Changed
 - Code, comments, tests and README are now in English; the page stays in French.

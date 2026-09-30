@@ -58,4 +58,4 @@ class TestEmptyPageIsNeverTakenAsEndOfList:
     def test_persistent_empty_page_fails_loudly(self, monkeypatch):
         monkeypatch.setattr(euronext.time, "sleep", lambda s: None)
         with pytest.raises(RuntimeError):
-            euronext._post(_FakeSession([self.EMPTY] * 6), 0)
+            euronext._post(_FakeSession([self.EMPTY] * euronext.ATTEMPTS), 0)

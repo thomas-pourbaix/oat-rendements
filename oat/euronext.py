@@ -18,6 +18,7 @@ URL = "https://live.euronext.com/fr/product_directory/data/bonds-paris?mics=ALXP
 USER_AGENT = "Mozilla/5.0 (compatible; oat-rendements; +https://github.com/thomas-pourbaix/oat-rendements)"
 ISSUER = "REPUBLIC OF FRANCE"
 PAGE_SIZE = 1000
+ATTEMPTS = 10  # empty pages can come in bursts lasting a few minutes
 
 _MONTHS = {m: i for i, m in enumerate(
     ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], 1)}
@@ -43,7 +44,7 @@ def _text(html: str) -> str:
 
 def _post(session: requests.Session, start: int) -> dict:
     last_error = None
-    for attempt in range(6):
+    for attempt in range(ATTEMPTS):
         try:
             r = session.post(URL, data={"sEcho": 1, "iDisplayStart": start, "iDisplayLength": PAGE_SIZE},
                              timeout=90)
@@ -54,7 +55,7 @@ def _post(session: requests.Session, start: int) -> dict:
             return page
         except (requests.RequestException, ValueError) as e:  # intermittent empty response
             last_error = e
-            time.sleep(2 + 3 * attempt)
+            time.sleep(min(5 + 10 * attempt, 60))
     raise RuntimeError(f"Euronext unreachable (offset {start}): {last_error}")
 
 
