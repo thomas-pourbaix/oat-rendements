@@ -5,6 +5,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- `INVARIANTS.md`: catalogue of the rules the code must always respect, each one tied to its tests.
+
 ### Fixed
 - Bonds traded on the day of the build lost their last trade date (Euronext swaps the date and time layout for them), so the 30-day filter hid almost every nominal OAT.
 - An intermittent empty page from the Euronext API silently truncated the bond list; it is now retried, and the build fails if it persists.
