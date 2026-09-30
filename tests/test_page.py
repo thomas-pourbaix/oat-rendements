@@ -134,3 +134,97 @@ class TestCalculatorNeverShowsAYieldWithoutValidInput:
         calc.locator("#calc-price").fill(price)
         expect(calc.locator("#calc-result")).to_contain_text(message)
         expect(calc.locator("#calc-ytm")).to_have_count(0)
+
+    @pytest.mark.parametrize("fee", ["abc", "-1", "100"])
+    def test_no_yield_with_invalid_fee(self, calc, fee):
+        calc.locator("#calc-isin").fill("FR0000000002")
+        calc.locator("#calc-price").fill("97")
+        calc.locator("#calc-fee").fill(fee)
+        message = "Frais invalides"
+        expect(calc.locator("#calc-result")).to_contain_text(message)
+        expect(calc.locator("#calc-ytm")).to_have_count(0)
+
+
+def _fr(x: float, decimals: int = 2) -> str:
+    """French number formatting, as the page writes it (non-breaking space as thousands separator)."""
+    return f"{x:,.{decimals}f}".replace(",", "\u00a0").replace(".", ",")
+
+
+class TestNetYieldIncludesTheFees:
+    """INV-014: with brokerage fees typed, the net yield is the yield of a bond bought at the total cost, fees charged on the dirty price."""
+
+    def test_net_yield(self, calc):
+        from datetime import date
+
+        from oat.yields import accrued_interest, add_business_days, yield_to_maturity
+        from tests.conftest import BONDS
+        bond = next(b for b in BONDS if b["isin"] == "FR0000000002")
+        calc.locator("#calc-isin").fill("FR0000000002")
+        calc.locator("#calc-price").fill("97,5")
+        calc.locator("#calc-fee").fill("0,2")
+        settlement, maturity = add_business_days(date.today(), 2), date.fromisoformat(bond["maturity"])
+        accrued = accrued_interest(bond["coupon"], settlement, maturity)
+        cost = (97.5 + accrued) * 1.002
+        net = yield_to_maturity(cost - accrued, bond["coupon"], settlement, maturity)
+        expect(calc.locator("#calc-net")).to_have_text(_fr(net * 100) + " %")
+        expect(calc.locator("#calc-unit")).to_have_text(_fr(cost / 100, 4))
+
+    def test_total_cost_matches_a_real_broker_statement(self, page: Page, site_url):
+        # External oracle: CIC order of 30/09/2026, OAT 0.75 % 25/11/2028 at 94.4 %, 0.2 % fees,
+        # unit cost price shown by the broker (truncated to 4 decimals): 0.9522
+        import math
+        page.goto(site_url)
+        cost = page.evaluate("Yields.totalCost(94.4, 0.002, 0.75, '2026-10-02', '2028-11-25')")
+        assert math.floor(cost / 100 * 1e4) / 1e4 == 0.9522, "INV-014: total cost matches the broker's unit cost price"
+        # The broker figure is too coarse to tell where fees apply (0.51 EUR on this order): pin it exactly
+        from datetime import date
+
+        from oat.yields import accrued_interest
+        accrued = accrued_interest(0.75, date(2026, 10, 2), date(2028, 11, 25))
+        assert cost == pytest.approx((94.4 + accrued) * 1.002, abs=1e-9), "INV-014: fees are charged on the dirty price"
+
+
+class TestExplainerExampleMatchesTheCode:
+    """INV-015: every figure of the worked example on comprendre.html is what the yield code computes for that order."""
+
+    FACE, PRICE, FEE, COUPON = 40000, 94.4, 0.002, 0.75
+
+    def test_purchase_and_hold(self, page: Page, site_url):
+        from datetime import date
+
+        from oat.yields import accrued_interest, yield_to_maturity
+        page.goto(site_url + "comprendre.html")
+        text = page.locator("main").inner_text()
+        settle, mat = date(2026, 10, 2), date(2028, 11, 25)
+        acc = accrued_interest(self.COUPON, settle, mat)
+        dirty = self.FACE * (self.PRICE + acc) / 100
+        total = dirty * (1 + self.FEE)
+        coupon = self.FACE * self.COUPON / 100
+        expected = {
+            "accrued": _fr(self.FACE * acc / 100) + " €",
+            "dirty": _fr(dirty) + " €",
+            "fees": _fr(dirty * self.FEE) + " €",
+            "total": _fr(total) + " €",
+            "gain": "+" + _fr(3 * coupon + self.FACE - total) + " €",
+            "gross yield": _fr(yield_to_maturity(self.PRICE, self.COUPON, settle, mat) * 100) + " %",
+            "net yield": _fr(yield_to_maturity(total / self.FACE * 100 - acc, self.COUPON, settle, mat) * 100) + " %",
+        }
+        for name, value in expected.items():
+            assert value in text, f"INV-015: {name} should read {value!r} on the explainer page"
+
+    def test_sale_before_maturity(self, page: Page, site_url):
+        from datetime import date
+
+        from oat.yields import accrued_interest, dirty_price
+        page.goto(site_url + "comprendre.html")
+        text = page.locator("main").inner_text()
+        buy, sell, mat = date(2026, 10, 2), date(2027, 10, 4), date(2028, 11, 25)
+        total = self.FACE * (self.PRICE + accrued_interest(self.COUPON, buy, mat)) / 100 * (1 + self.FEE)
+        acc = accrued_interest(self.COUPON, sell, mat)
+        assert _fr(self.FACE * acc / 100) + " €" in text, "INV-015: accrued interest at sale"
+        for rate in (0.025, 0.035, 0.045):
+            clean = dirty_price(rate, self.COUPON, sell, mat) - acc
+            received = self.FACE * (clean + acc) / 100 * (1 - self.FEE)
+            result = received + self.FACE * self.COUPON / 100 - total
+            for value in (_fr(clean) + " %", _fr(received) + " €", "+" + _fr(result) + " €"):
+                assert value in text, f"INV-015: sale at {rate:.1%} should show {value!r}"

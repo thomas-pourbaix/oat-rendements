@@ -100,7 +100,27 @@ from today.
 - **Coverage**: `tests/test_page.py::TestCalculatorGivesTheYieldAtTheUserPrice`.
 
 ### INV-013 [H] ✅ The calculator never shows a yield without a valid ISIN and price
-An invalid or unlisted ISIN, or a missing, non-numeric or zero price, shows a message saying what is
+An invalid or unlisted ISIN, a missing, non-numeric or zero price, or an invalid fee (non-numeric,
+negative, 100 % or more; an empty fee field is valid and means no fees) shows a message saying what is
 missing, and no yield.
 - **Why**: a yield computed on a wrong input looks like a real answer.
 - **Coverage**: `tests/test_page.py::TestCalculatorNeverShowsAYieldWithoutValidInput`.
+
+### INV-014 [H] ✅ The net yield includes the fees, charged on the dirty price
+With a fee rate typed, total cost = (clean price + accrued interest) × (1 + fee rate), and the net
+yield is the yield to maturity of a bond whose dirty price is that total cost.
+- **Why**: on a short maturity, fees change the yield noticeably (3.50 % → 3.40 % on the order below);
+  brokers charge them on the amount paid, accrued interest included.
+- **Coverage**: `tests/test_page.py::TestNetYieldIncludesTheFees`, with an external oracle: a CIC order
+  of 2026-09-30 (OAT 0.75 % 25/11/2028 at 94.4 %, 0.2 % fees) whose statement shows a unit cost price
+  of 0.9522.
+- **Known limit**: that broker figure is too coarse to tell fees on the dirty price from fees on the
+  clean price (0.51 € apart on that order); the exact convention is pinned by a formula assertion.
+
+## 5. Explainer page (`site/comprendre.html`)
+
+### INV-015 [M] ✅ Every figure of the worked example is what the yield code computes
+Accrued interest, dirty price, fees, total paid, gain at maturity, gross and net yields, and the three
+resale scenarios are recomputed by the tests with `oat/yields.py` and must appear as written.
+- **Why**: the figures are written by hand in the page; a typo would teach the wrong thing.
+- **Coverage**: `tests/test_page.py::TestExplainerExampleMatchesTheCode`.

@@ -14,6 +14,7 @@
   <header>
     <h1>Rendement des OAT à l'échéance</h1>
     <p class="lede">Obligations de l'État français cotées sur Euronext Paris : quel rendement annuel si j'achète au dernier cours et que je garde le titre jusqu'à son terme ?</p>
+    <p class="lede-link"><a href="comprendre.html">Comment ça marche ? Acheter et revendre une OAT, expliqué sur un vrai ordre de bourse</a></p>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Vues">
@@ -77,6 +78,9 @@
       </label>
       <label for="calc-price">Cours d'achat (% du nominal, pied de coupon)
         <input id="calc-price" type="text" inputmode="decimal" autocomplete="off" placeholder="96,25">
+      </label>
+      <label for="calc-fee">Frais de courtage (%, facultatif)
+        <input id="calc-fee" type="text" inputmode="decimal" autocomplete="off" placeholder="0,2">
       </label>
     </section>
     <div id="calc-result" class="calc-result" aria-live="polite"></div>

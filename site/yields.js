@@ -71,5 +71,17 @@ const Yields = (() => {
     return (lo + hi) / 2;
   }
 
-  return { addBusinessDays, couponDates, accruedInterest, dirtyPrice, yieldToMaturity };
+  // Total paid per 100 of face value when the broker charges `feeRate` (0.002 = 0.2 %)
+  // on the amount paid, accrued interest included.
+  function totalCost(cleanPrice, feeRate, coupon, settlement, maturity) {
+    return (cleanPrice + accruedInterest(coupon, settlement, maturity)) * (1 + feeRate);
+  }
+
+  // Yield to maturity net of fees: the yield of a bond whose dirty price is the total cost.
+  function netYieldToMaturity(cleanPrice, feeRate, coupon, settlement, maturity) {
+    const accrued = accruedInterest(coupon, settlement, maturity);
+    return yieldToMaturity(totalCost(cleanPrice, feeRate, coupon, settlement, maturity) - accrued, coupon, settlement, maturity);
+  }
+
+  return { addBusinessDays, couponDates, accruedInterest, dirtyPrice, yieldToMaturity, totalCost, netYieldToMaturity };
 })();

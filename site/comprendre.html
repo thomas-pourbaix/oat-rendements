@@ -1,0 +1,101 @@
+<!doctype html>
+<!-- Copyright (C) 2026 Thomas Pourbaix
+     SPDX-License-Identifier: AGPL-3.0-only -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comprendre les OAT</title>
+<meta name="description" content="Acheter, garder et revendre une obligation d'État, expliqué sur un vrai ordre de bourse : cours, coupon couru, frais, coupons, remboursement, rendement.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="explainer">
+  <p class="back"><a href="./">← Rendement des OAT</a></p>
+  <header>
+    <h1>Acheter une OAT, concrètement</h1>
+    <p class="lede">Ce qui se passe quand on achète une obligation d'État, ce qu'on paie vraiment, ce qu'on reçoit ensuite, et ce qui change si on revend avant l'échéance. Le tout sur un vrai ordre de bourse.</p>
+  </header>
+
+  <section>
+    <h2>Une obligation, c'est un prêt</h2>
+    <p>Acheter une OAT (obligation assimilable du Trésor), c'est prêter de l'argent à l'État français. En échange, il verse chaque année un intérêt fixe, le <strong>coupon</strong>, puis rembourse le <strong>nominal</strong> (la somme prêtée) à une date fixée d'avance, l'<strong>échéance</strong>.</p>
+    <p>L'OAT de notre exemple s'appelle « OAT 0,75 % 25 novembre 2028 » : pour 100 € de nominal, elle verse 0,75 € chaque 25 novembre, et rembourse 100 € le 25 novembre 2028.</p>
+  </section>
+
+  <section>
+    <h2>Le cours : un pourcentage du nominal</h2>
+    <p>Une OAT déjà émise s'achète en bourse, à un prix qui bouge tous les jours. Ce prix, le <strong>cours</strong>, s'exprime en pourcentage du nominal : un cours de 94,4 % signifie qu'on paie 94,40 € pour 100 € de nominal, qui seront remboursés 100 € à l'échéance.</p>
+    <p>Pourquoi moins de 100 % ? Parce que cette OAT a été émise en 2018, quand les taux étaient très bas : son coupon de 0,75 % est faible par rapport aux taux d'aujourd'hui. Pour qu'elle reste intéressante, son prix a baissé. L'écart entre le prix payé et les 100 € remboursés est un gain qui s'ajoute aux coupons.</p>
+  </section>
+
+  <section>
+    <h2>Le coupon couru : on paie aussi les intérêts déjà accumulés</h2>
+    <p>Le cours affiché est dit <strong>pied de coupon</strong> : il n'inclut pas les intérêts accumulés depuis le dernier coupon. Or le vendeur a détenu le titre pendant ces jours-là. L'acheteur lui rembourse donc cette part d'intérêts, le <strong>coupon couru</strong>, en plus du cours.</p>
+    <p>Ce n'est pas une perte : au prochain coupon, l'acheteur reçoit le coupon entier, y compris la part qu'il a avancée au vendeur.</p>
+    <p>Le coupon couru se calcule au jour près, jusqu'à la date de <strong>règlement</strong> : l'argent et les titres changent de mains deux jours ouvrés après l'ordre (J+2).</p>
+  </section>
+
+  <section id="exemple">
+    <h2>L'exemple : un vrai ordre de 40 000 €</h2>
+    <p>Le 30 septembre 2026, ordre d'achat de <strong>40 000 € de nominal</strong> de l'OAT 0,75 % 25 novembre 2028 (ISIN FR0013341682), exécuté au cours de <strong>94,4 %</strong>, avec des frais de courtage de <strong>0,2 %</strong>. Règlement le 2 octobre 2026.</p>
+    <div class="table-wrap">
+      <table class="example">
+        <tbody>
+          <tr><td>Cours : 94,4 % × 40&nbsp;000 €</td><td class="num">37&nbsp;760,00 €</td></tr>
+          <tr><td>Coupon couru : 0,75 % × 40&nbsp;000 € × 311 jours / 365<br><span class="muted">du dernier coupon (25 nov. 2025) au règlement (2 oct. 2026)</span></td><td class="num">255,62 €</td></tr>
+          <tr><td>Prix plein (cours + coupon couru)</td><td class="num">38&nbsp;015,62 €</td></tr>
+          <tr><td>Frais : 0,2 % du prix plein</td><td class="num">76,03 €</td></tr>
+          <tr class="total"><td>Total payé</td><td class="num">38&nbsp;091,65 €</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Rapporté à un euro de nominal, cela fait 38&nbsp;091,65 / 40&nbsp;000 = 0,95229 : c'est le <strong>prix de revient unitaire</strong> que les courtiers affichent, souvent tronqué à 0,9522. Il est plus élevé que le cours de 94,4 % parce qu'il inclut le coupon couru et les frais.</p>
+  </section>
+
+  <section>
+    <h2>Si on garde le titre jusqu'à l'échéance</h2>
+    <p>Tous les montants sont connus dès l'achat : sauf défaut de l'État, voici ce qui sera versé.</p>
+    <div class="table-wrap">
+      <table class="example">
+        <thead><tr><th>Date</th><th>Mouvement</th><th class="num">Montant</th></tr></thead>
+        <tbody>
+          <tr><td>2 oct. 2026</td><td>Achat, frais inclus</td><td class="num">−38&nbsp;091,65 €</td></tr>
+          <tr><td>25 nov. 2026</td><td>Coupon : 0,75 % × 40&nbsp;000 €<br><span class="muted">dont 255,62 € qui remboursent le coupon couru avancé</span></td><td class="num">+300,00 €</td></tr>
+          <tr><td>25 nov. 2027</td><td>Coupon</td><td class="num">+300,00 €</td></tr>
+          <tr><td>25 nov. 2028</td><td>Dernier coupon + remboursement du nominal</td><td class="num">+40&nbsp;300,00 €</td></tr>
+          <tr class="total"><td colspan="2">Gain total, avant impôts</td><td class="num">+2&nbsp;808,35 €</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Ramené à un taux annuel, c'est le <strong>rendement actuariel</strong> : <strong>3,50 %</strong> par an au cours de 94,4 %, et <strong>3,40 %</strong> une fois les frais inclus. Sur une échéance courte, les frais pèsent : ils sont amortis sur un peu plus de deux ans seulement. L'onglet <a href="./#calcul">« Mon prix d'achat »</a> fait ce calcul pour n'importe quelle OAT.</p>
+    <p class="muted">Le rendement actuariel suppose que les coupons sont réinvestis au même taux. Dépensés, ils rapportent un peu moins, mais le gain total en euros reste celui du tableau.</p>
+  </section>
+
+  <section>
+    <h2>Si on revend avant l'échéance</h2>
+    <p>On peut revendre à tout moment, au cours du jour. La mécanique est symétrique : l'acheteur verse le cours <em>plus</em> le coupon couru, et on paie à nouveau des frais. Mais le cours dépend alors des taux du marché au moment de la vente : si les taux ont monté, le prix de l'OAT a baissé, et inversement.</p>
+    <p>Revente de la même ligne un an plus tard, règlement le 4 octobre 2027 (coupon couru : 257,26 €, frais de 0,2 %), selon le rendement demandé par le marché ce jour-là :</p>
+    <div class="table-wrap">
+      <table class="example">
+        <thead><tr><th>Taux à la revente</th><th class="num">Cours</th><th class="num">Reçu</th><th class="num">Résultat*</th></tr></thead>
+        <tbody>
+          <tr><td>2,5 %<br><span class="muted">baisse</span></td><td class="num">98,05 %</td><td class="num">39&nbsp;399,00 €</td><td class="num">+1&nbsp;607,35 €</td></tr>
+          <tr><td>3,5 %<br><span class="muted">inchangé</span></td><td class="num">96,97 %</td><td class="num">38&nbsp;967,28 €</td><td class="num">+1&nbsp;175,63 €</td></tr>
+          <tr><td>4,5 %<br><span class="muted">hausse</span></td><td class="num">95,91 %</td><td class="num">38&nbsp;544,40 €</td><td class="num">+752,75 €</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">* Reçu à la revente + coupon de novembre 2026 − total payé à l'achat.</p>
+    <p>Même à taux inchangés, le cours remonte vers 100 % à mesure que l'échéance approche : c'est ce qui fait le gain. Une hausse des taux réduit ce gain, et sur un titre plus long elle peut le transformer en perte. <strong>En gardant jusqu'à l'échéance, on ignore ces variations</strong> : le résultat est celui calculé le jour de l'achat.</p>
+  </section>
+
+  <section>
+    <h2>Et les impôts ?</h2>
+    <p>Les coupons et la plus-value (l'écart entre le prix de revente ou de remboursement et le prix d'achat) sont imposés, par défaut au prélèvement forfaitaire unique. Tous les montants de cette page sont avant impôts. Dans un compte-titres, la banque retient généralement l'impôt sur les coupons au moment du versement.</p>
+  </section>
+
+  <p class="source">Calculs faits avec le même code que le reste du site (base exact/exact, règlement à J+2). Ceci n'est pas un conseil en investissement. Logiciel libre sous licence <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a> : <a href="https://github.com/thomas-pourbaix/oat-rendements">code source</a>.</p>
+</main>
+</body>
+</html>

@@ -111,6 +111,7 @@ function renderCalc() {
   const out = $("#calc-result");
   const isin = $("#calc-isin").value.replace(/\s/g, "").toUpperCase();
   const priceText = $("#calc-price").value.trim();
+  const feeText = $("#calc-fee").value.trim();
   if (!isin) { out.innerHTML = ""; return; }
   if (!ISIN_RE.test(isin)) { out.innerHTML = `<p class="calc-msg">ISIN incomplet ou invalide : 12 caractères, par exemple FR0014016G71.</p>`; return; }
   if (!data) { out.innerHTML = `<p class="calc-msg">Chargement des données…</p>`; return; }
@@ -123,25 +124,35 @@ function renderCalc() {
   if (!priceText) { out.innerHTML = head + `<p class="calc-msg">Saisissez votre cours d'achat. Dernier cours coté : ${num(b.price, 2)} %.</p>`; return; }
   const price = parsePrice(priceText);
   if (price === null || price <= 0) { out.innerHTML = head + `<p class="calc-msg">Cours invalide : saisissez un nombre en % du nominal, par exemple 96,25.</p>`; return; }
+  const feePct = feeText ? parsePrice(feeText) : 0;
+  if (feePct === null || feePct >= 100) { out.innerHTML = head + `<p class="calc-msg">Frais invalides : saisissez un pourcentage, par exemple 0,2, ou laissez le champ vide.</p>`; return; }
+  const fee = feePct / 100;
 
   const ytm = Yields.yieldToMaturity(price, b.coupon, settlement, b.maturity);
   const accrued = Yields.accruedInterest(b.coupon, settlement, b.maturity);
   const years = (Date.parse(b.maturity) - Date.parse(settlement)) / 864e5 / 365.25;
   const real = b.kind.startsWith("inflation") ? " réel" : "";
+  const cost = Yields.totalCost(price, fee, b.coupon, settlement, b.maturity);
+  const net = feeText ? Yields.netYieldToMaturity(price, fee, b.coupon, settlement, b.maturity) : null;
   out.innerHTML = head + `
     <p class="calc-ytm">Rendement annuel à l'échéance : <strong id="calc-ytm">${pct(ytm)}${real}</strong></p>
+    ${net === null ? "" : `<p class="calc-ytm">Net de frais : <strong id="calc-net">${pct(net)}${real}</strong></p>`}
     <dl class="calc-details">
       <dt>Durée restante</dt><dd>${num(years, 1)} ans</dd>
       <dt>Coupon couru payé en plus</dt><dd>${num(accrued, 3)} %</dd>
-      <dt>Prix total payé (coupon couru inclus)</dt><dd>${num(price + accrued, 3)} %</dd>
-      <dt>1 000 € deviennent</dt><dd>${Math.round(1000 * Math.pow(1 + ytm, years)).toLocaleString("fr-FR")} €</dd>
+      <dt>Prix plein (cours + coupon couru)</dt><dd>${num(price + accrued, 3)} %</dd>
+      ${net === null ? "" : `<dt>Frais (${num(feePct, 2)} %)</dt><dd>${num(cost - price - accrued, 3)} %</dd>
+      <dt>Coût total, frais inclus</dt><dd>${num(cost, 3)} %</dd>
+      <dt>Prix de revient unitaire (par euro de nominal)</dt><dd id="calc-unit">${num(cost / 100, 4)}</dd>`}
+      <dt>1 000 € ${net === null ? "" : "investis frais inclus "}deviennent</dt><dd>${Math.round(1000 * Math.pow(1 + (net ?? ytm), years)).toLocaleString("fr-FR")} €</dd>
       <dt>Pour comparaison, au dernier cours (${num(b.price, 2)} %)</dt><dd>${pct(b.ytm)}${real}</dd>
     </dl>
-    <p class="calc-note">Règlement le ${dateFr(settlement)} (J+2 ouvrés). Avant frais et impôts.</p>`;
+    <p class="calc-note">Règlement le ${dateFr(settlement)} (J+2 ouvrés). ${net === null ? "Avant frais et impôts." : "Frais calculés sur le montant payé, coupon couru inclus. Avant impôts."} <a href="comprendre.html">Comprendre ces montants</a></p>`;
 }
 
 $("#calc-isin").addEventListener("input", renderCalc);
 $("#calc-price").addEventListener("input", renderCalc);
+$("#calc-fee").addEventListener("input", renderCalc);
 
 $("#table tbody").addEventListener("click", (e) => {
   const btn = e.target.closest("button.isin");
