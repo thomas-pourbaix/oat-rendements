@@ -6,6 +6,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- "Mon prix d'achat" tab: paste an ISIN, type your buying price, get the yield to maturity at that price (`site/yields.js`, a port of `oat/yields.py` kept identical by INV-011). Direct link: `#calcul`.
 - End-to-end tests of the page in a real browser (Playwright through pytest): horizon window, kinds, freshness filter, best yield, ISIN copy.
 - Clicking a bond's ISIN copies it to the clipboard.
 - `INVARIANTS.md`: catalogue of the rules the code must always respect, each one tied to its tests.

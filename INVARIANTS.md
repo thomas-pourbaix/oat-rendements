@@ -7,7 +7,7 @@
 > Do not read the code to write a test: read the invariant and write the test that checks
 > **that** rule. If an invariant is ambiguous, raise a question rather than interpreting the code.
 
-**Scope**: yield computation (`oat/yields.py`), Euronext data fetching (`oat/euronext.py`) and the page (`site/`).
+**Scope**: yield computation (`oat/yields.py`), Euronext data fetching (`oat/euronext.py`) and the page (`site/`), calculator included.
 
 **Legend**: criticality `C` / `H` / `M` / `L` · status ✅ verified · ⚠️ partial · ❌ untested (debt) · 🐛 known bug.
 
@@ -81,3 +81,26 @@ A bond whose last trade is older than 30 days, or has no known last trade, is hi
 The ISIN is shown again afterwards.
 - **Why**: the ISIN is what the user types into their broker's order form.
 - **Coverage**: `tests/test_page.py::TestClickingAnIsinCopiesIt`.
+
+## 4. Calculator ("Mon prix d'achat" tab)
+
+### INV-011 [C] ✅ The browser computes the same yield as the Python code
+`site/yields.js` (used by the calculator) and `oat/yields.py` (used for the table) give the same yield
+(within 1e-10), accrued interest and T+2 settlement for the same bond, price and settlement date.
+- **Why**: the calculation exists twice (the page is static, the user's price is only known in the
+  browser); without this rule the two would drift apart and the tabs would disagree.
+- **Coverage**: `tests/test_page.py::TestBrowserYieldMatchesPython` (zero coupon, par bond, between
+  coupons, above par, maturity on 29 February).
+
+### INV-012 [H] ✅ The calculator gives the yield at the price typed by the user
+For a listed ISIN (pasted with spaces or in lower case) and a price typed in % of face value (decimal
+comma accepted), the yield shown is the yield to maturity at that price, settled two business days
+from today.
+- **Why**: the user does not always buy at the last traded price.
+- **Coverage**: `tests/test_page.py::TestCalculatorGivesTheYieldAtTheUserPrice`.
+
+### INV-013 [H] ✅ The calculator never shows a yield without a valid ISIN and price
+An invalid or unlisted ISIN, or a missing, non-numeric or zero price, shows a message saying what is
+missing, and no yield.
+- **Why**: a yield computed on a wrong input looks like a real answer.
+- **Coverage**: `tests/test_page.py::TestCalculatorNeverShowsAYieldWithoutValidInput`.

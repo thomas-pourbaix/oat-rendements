@@ -81,7 +81,67 @@ document.querySelectorAll("th[data-key]").forEach((th) =>
     render();
   })
 );
-document.querySelectorAll("input, select").forEach((el) => el.addEventListener("input", render));
+document.querySelectorAll("#panel-table input, #panel-table select").forEach((el) => el.addEventListener("input", render));
+
+function showTab(name) {
+  const calc = name === "calc";
+  $("#tab-table").setAttribute("aria-selected", String(!calc));
+  $("#tab-calc").setAttribute("aria-selected", String(calc));
+  $("#panel-table").hidden = calc;
+  $("#panel-calc").hidden = !calc;
+}
+
+$("#tab-table").addEventListener("click", () => { history.replaceState(null, "", location.pathname); showTab("table"); });
+$("#tab-calc").addEventListener("click", () => { history.replaceState(null, "", "#calcul"); showTab("calc"); });
+if (location.hash === "#calcul") showTab("calc");
+
+const ISIN_RE = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
+
+function todayIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function parsePrice(text) {
+  const clean = text.replace(/[\s%]/g, "").replace(",", ".");
+  return /^\d+(\.\d+)?$/.test(clean) ? parseFloat(clean) : null;
+}
+
+function renderCalc() {
+  const out = $("#calc-result");
+  const isin = $("#calc-isin").value.replace(/\s/g, "").toUpperCase();
+  const priceText = $("#calc-price").value.trim();
+  if (!isin) { out.innerHTML = ""; return; }
+  if (!ISIN_RE.test(isin)) { out.innerHTML = `<p class="calc-msg">ISIN incomplet ou invalide : 12 caractères, par exemple FR0014016G71.</p>`; return; }
+  if (!data) { out.innerHTML = `<p class="calc-msg">Chargement des données…</p>`; return; }
+  const b = data.bonds.find((x) => x.isin === isin);
+  if (!b) { out.innerHTML = `<p class="calc-msg">Cet ISIN ne figure pas parmi les OAT cotées sur Euronext Paris.</p>`; return; }
+
+  const settlement = Yields.addBusinessDays(todayIso(), 2);
+  const head = `<p class="calc-bond"><strong>${label(b)}</strong>${KIND_LABEL[b.kind] ? `<span class="tag">${KIND_LABEL[b.kind]}</span>` : ""} · échéance le ${dateFr(b.maturity)}</p>`;
+  if (b.maturity <= settlement) { out.innerHTML = head + `<p class="calc-msg">Ce titre arrive à échéance avant le règlement d'un achat fait aujourd'hui.</p>`; return; }
+  if (!priceText) { out.innerHTML = head + `<p class="calc-msg">Saisissez votre cours d'achat. Dernier cours coté : ${num(b.price, 2)} %.</p>`; return; }
+  const price = parsePrice(priceText);
+  if (price === null || price <= 0) { out.innerHTML = head + `<p class="calc-msg">Cours invalide : saisissez un nombre en % du nominal, par exemple 96,25.</p>`; return; }
+
+  const ytm = Yields.yieldToMaturity(price, b.coupon, settlement, b.maturity);
+  const accrued = Yields.accruedInterest(b.coupon, settlement, b.maturity);
+  const years = (Date.parse(b.maturity) - Date.parse(settlement)) / 864e5 / 365.25;
+  const real = b.kind.startsWith("inflation") ? " réel" : "";
+  out.innerHTML = head + `
+    <p class="calc-ytm">Rendement annuel à l'échéance : <strong id="calc-ytm">${pct(ytm)}${real}</strong></p>
+    <dl class="calc-details">
+      <dt>Durée restante</dt><dd>${num(years, 1)} ans</dd>
+      <dt>Coupon couru payé en plus</dt><dd>${num(accrued, 3)} %</dd>
+      <dt>Prix total payé (coupon couru inclus)</dt><dd>${num(price + accrued, 3)} %</dd>
+      <dt>1 000 € deviennent</dt><dd>${Math.round(1000 * Math.pow(1 + ytm, years)).toLocaleString("fr-FR")} €</dd>
+      <dt>Pour comparaison, au dernier cours (${num(b.price, 2)} %)</dt><dd>${pct(b.ytm)}${real}</dd>
+    </dl>
+    <p class="calc-note">Règlement le ${dateFr(settlement)} (J+2 ouvrés). Avant frais et impôts.</p>`;
+}
+
+$("#calc-isin").addEventListener("input", renderCalc);
+$("#calc-price").addEventListener("input", renderCalc);
 
 $("#table tbody").addEventListener("click", (e) => {
   const btn = e.target.closest("button.isin");
@@ -101,6 +161,7 @@ fetch("data/oats.json")
     const when = new Date(d.generated_at).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" });
     $("#updated").textContent = `Dernière mise à jour : ${when} (règlement au ${dateFr(d.settlement)}).`;
     render();
+    renderCalc();
   })
   .catch(() => {
     $("#summary").textContent = "Impossible de charger les données.";

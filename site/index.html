@@ -16,6 +16,13 @@
     <p class="lede">Obligations de l'État français cotées sur Euronext Paris : quel rendement annuel si j'achète au dernier cours et que je garde le titre jusqu'à son terme ?</p>
   </header>
 
+  <nav class="tabs" role="tablist" aria-label="Vues">
+    <button type="button" role="tab" id="tab-table" aria-controls="panel-table" aria-selected="true">Toutes les OAT</button>
+    <button type="button" role="tab" id="tab-calc" aria-controls="panel-calc" aria-selected="false">Mon prix d'achat</button>
+  </nav>
+
+  <div id="panel-table" role="tabpanel" aria-labelledby="tab-table">
+
   <section class="controls" aria-label="Filtres">
     <div class="horizon">
       <label for="n">Horizon : <strong><output id="n-out">5</output> ans</strong></label>
@@ -60,6 +67,21 @@
     </table>
   </div>
 
+  </div>
+
+  <div id="panel-calc" role="tabpanel" aria-labelledby="tab-calc" hidden>
+    <section class="controls calc" aria-label="Calcul du rendement">
+      <p class="calc-intro">Collez l'ISIN d'une OAT et le cours auquel vous l'achetez : le rendement annuel si vous la gardez jusqu'à l'échéance s'affiche.</p>
+      <label for="calc-isin">ISIN
+        <input id="calc-isin" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="FR0014016G71">
+      </label>
+      <label for="calc-price">Cours d'achat (% du nominal, pied de coupon)
+        <input id="calc-price" type="text" inputmode="decimal" autocomplete="off" placeholder="96,25">
+      </label>
+    </section>
+    <div id="calc-result" class="calc-result" aria-live="polite"></div>
+  </div>
+
   <section class="notes">
     <h2>Comment lire ce tableau</h2>
     <ul>
@@ -73,6 +95,7 @@
     <p class="source">Logiciel libre sous licence <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a> : <a href="https://github.com/thomas-pourbaix/oat-rendements">code source</a>.</p>
   </section>
 </main>
+<script src="yields.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

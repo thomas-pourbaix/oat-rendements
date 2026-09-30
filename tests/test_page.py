@@ -62,3 +62,75 @@ class TestClickingAnIsinCopiesIt:
         expect(button).to_have_text("ISIN copié ✓")
         assert page_2y.evaluate("navigator.clipboard.readText()") == "FR0000000002", "INV-010: clipboard holds the ISIN"
         expect(button).to_have_text("FR0000000002", timeout=3000)
+
+
+@pytest.mark.parametrize("price, coupon, settlement, maturity", [
+    (80.0, 0.0, "2026-11-25", "2031-11-25"),     # zero coupon, whole years
+    (100.0, 3.0, "2026-05-25", "2033-05-25"),    # par bond on a coupon date
+    (96.25, 2.4, "2026-10-02", "2029-09-24"),    # between two coupons
+    (104.8, 5.5, "2026-10-02", "2029-04-25"),    # above par
+    (97.0, 1.75, "2026-10-02", "2028-02-29"),    # maturity on 29 February
+])
+class TestBrowserYieldMatchesPython:
+    """INV-011: the browser's yield computation (site/yields.js) gives the same results as oat/yields.py."""
+
+    def test_same_yield(self, page: Page, site_url, price, coupon, settlement, maturity):
+        from datetime import date
+
+        from oat.yields import accrued_interest, yield_to_maturity
+        page.goto(site_url)
+        js = page.evaluate("([p, c, s, m]) => [Yields.yieldToMaturity(p, c, s, m), Yields.accruedInterest(c, s, m)]",
+                           [price, coupon, settlement, maturity])
+        s, m = date.fromisoformat(settlement), date.fromisoformat(maturity)
+        assert js[0] == pytest.approx(yield_to_maturity(price, coupon, s, m), abs=1e-10), "INV-011: same yield"
+        assert js[1] == pytest.approx(accrued_interest(coupon, s, m), abs=1e-12), "INV-011: same accrued interest"
+
+    def test_same_settlement(self, page: Page, site_url, price, coupon, settlement, maturity):
+        from datetime import date
+
+        from oat.yields import add_business_days
+        page.goto(site_url)
+        js = page.evaluate("(s) => Yields.addBusinessDays(s, 2)", settlement)
+        assert js == add_business_days(date.fromisoformat(settlement), 2).isoformat(), "INV-011: same T+2 settlement"
+
+
+@pytest.fixture
+def calc(page: Page, site_url):
+    """Page open on the calculator tab."""
+    page.goto(site_url + "#calcul")
+    expect(page.locator("#panel-calc")).to_be_visible()
+    return page
+
+
+class TestCalculatorGivesTheYieldAtTheUserPrice:
+    """INV-012: for a listed ISIN and a price typed by the user, the calculator shows the yield to maturity at that price, settled at T+2 from today."""
+
+    def test_yield_at_user_price(self, calc):
+        from datetime import date
+
+        from oat.yields import add_business_days, yield_to_maturity
+        from tests.conftest import BONDS
+        bond = next(b for b in BONDS if b["isin"] == "FR0000000002")
+        calc.locator("#calc-isin").fill(" fr0000000002 ")   # pasted with spaces, lower case
+        calc.locator("#calc-price").fill("97,5")             # French decimal comma
+        settlement = add_business_days(date.today(), 2)
+        expected = yield_to_maturity(97.5, bond["coupon"], settlement, date.fromisoformat(bond["maturity"]))
+        shown = f"{expected * 100:.2f}".replace(".", ",") + " %"
+        expect(calc.locator("#calc-ytm")).to_have_text(shown)
+
+
+class TestCalculatorNeverShowsAYieldWithoutValidInput:
+    """INV-013: the calculator shows no yield for an invalid or unlisted ISIN, or a missing or invalid price: it explains what is missing instead."""
+
+    @pytest.mark.parametrize("isin, price, message", [
+        ("FR00000", "97", "ISIN incomplet"),
+        ("DE0001102580", "97", "ne figure pas"),
+        ("FR0000000002", "", "Saisissez votre cours"),
+        ("FR0000000002", "abc", "Cours invalide"),
+        ("FR0000000002", "0", "Cours invalide"),
+    ])
+    def test_no_yield(self, calc, isin, price, message):
+        calc.locator("#calc-isin").fill(isin)
+        calc.locator("#calc-price").fill(price)
+        expect(calc.locator("#calc-result")).to_contain_text(message)
+        expect(calc.locator("#calc-ytm")).to_have_count(0)

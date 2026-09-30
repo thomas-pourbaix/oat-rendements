@@ -11,7 +11,7 @@ Small web app listing every OAT (French government bond) listed on Euronext Pari
    - [oat/figi.py](oat/figi.py) fetches each bond's coupon and kind (nominal OAT, OATi, OAT€i, strip) from the public [OpenFIGI](https://www.openfigi.com/api) API;
    - [oat/yields.py](oat/yields.py) computes the yield to maturity: annual coupon, ACT/ACT ICMA accrued interest, T+2 business days settlement;
    - the result is written to `site/data/oats.json`.
-2. The `site/` folder (static HTML/JS) is published on GitHub Pages; filtering by horizon happens in the browser.
+2. The `site/` folder (static HTML/JS) is published on GitHub Pages; filtering by horizon happens in the browser, and so does the "Mon prix d'achat" calculator ([site/yields.js](site/yields.js), a port of `oat/yields.py`; a test keeps both identical).
 
 Tests: pytest for the Python code, and [Playwright](https://playwright.dev/python/) (through pytest) for the page, which runs in a real Chromium on a hand-made data set.
 
