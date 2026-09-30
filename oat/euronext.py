@@ -45,7 +45,10 @@ def _post(session: requests.Session, start: int) -> dict:
             r = session.post(URL, data={"sEcho": 1, "iDisplayStart": start, "iDisplayLength": PAGE_SIZE},
                              timeout=90)
             r.raise_for_status()
-            return r.json()
+            page = r.json()
+            if page.get("iTotalRecords") is None:  # intermittent: {"iTotalRecords": null, "aaData": []}
+                raise ValueError("empty page")
+            return page
         except (requests.RequestException, ValueError) as e:  # réponse vide intermittente
             last_error = e
             time.sleep(2 + 3 * attempt)
@@ -70,12 +73,16 @@ def _parse_price(cell: str) -> float | None:
 
 
 def _parse_trade(cell: str) -> datetime | None:
-    # ex. "25 Sep 202617:23 CEST" (date et heure collées une fois le HTML retiré)
-    m = re.match(r"(\d{2}) (\w{3}) (\d{4})(\d{2}):(\d{2})", _text(cell))
-    if not m or m.group(2) not in _MONTHS:
+    # Two layouts, date and time glued together once the HTML is stripped:
+    #   older trade:     "25 Sep 202617:23 CEST" (date shown, time in the tooltip)
+    #   trade of the day: "09:00 CEST30 Sep 2026" (time shown, date in the tooltip)
+    text = _text(cell)
+    d = re.search(r"(\d{2}) (\w{3}) (\d{4})", text)
+    if not d or d.group(2) not in _MONTHS:
         return None
-    d, mon, y, hh, mm = m.groups()
-    return datetime(int(y), _MONTHS[mon], int(d), int(hh), int(mm))
+    t = re.search(r"(\d{2}):(\d{2})", text)
+    hh, mm = (int(t.group(1)), int(t.group(2))) if t else (0, 0)
+    return datetime(int(d.group(3)), _MONTHS[d.group(2)], int(d.group(1)), hh, mm)
 
 
 def parse(rows: list[list[str]]) -> list[Quote]:
