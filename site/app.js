@@ -52,7 +52,7 @@ function render() {
     const tag = KIND_LABEL[b.kind] ? `<span class="tag">${KIND_LABEL[b.kind]}</span>` : "";
     const final = 1000 * Math.pow(1 + b.ytm, b.years);
     return `<tr class="${b.ytm === best ? "best" : ""}">
-      <td><a href="${b.url}" target="_blank" rel="noopener" title="${b.name}">${label(b)}</a>${tag}<span class="isin">${b.isin}</span></td>
+      <td><a href="${b.url}" target="_blank" rel="noopener" title="${b.name}">${label(b)}</a>${tag}<button type="button" class="isin" data-isin="${b.isin}" title="Copier l'ISIN" aria-label="Copier l'ISIN ${b.isin}">${b.isin}</button></td>
       <td>${dateFr(b.maturity)}</td>
       <td class="num">${num(b.years, 1)} ans</td>
       <td class="num">${num(b.coupon, 2)} %</td>
@@ -82,6 +82,17 @@ document.querySelectorAll("th[data-key]").forEach((th) =>
   })
 );
 document.querySelectorAll("input, select").forEach((el) => el.addEventListener("input", render));
+
+$("#table tbody").addEventListener("click", (e) => {
+  const btn = e.target.closest("button.isin");
+  if (!btn) return;
+  const isin = btn.dataset.isin;
+  const done = (text) => {
+    btn.textContent = text;
+    setTimeout(() => { btn.textContent = isin; }, 1500);
+  };
+  navigator.clipboard.writeText(isin).then(() => done("ISIN copié ✓"), () => done("Copie impossible"));
+});
 
 fetch("data/oats.json")
   .then((r) => r.json())

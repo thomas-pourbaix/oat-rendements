@@ -84,7 +84,11 @@ th[aria-sort=descending]::after { content: " ▼"; }
 .num { text-align: right; }
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: var(--accent-soft); }
-td .isin { display: block; font-size: 0.78rem; color: var(--muted); }
+td .isin {
+  display: block; font: inherit; font-size: 0.78rem; color: var(--muted);
+  background: none; border: 0; padding: 2px 0; cursor: copy; text-align: left;
+}
+td .isin:hover { color: var(--accent); text-decoration: underline dotted; }
 td.ytm { font-weight: 700; }
 tr.best td.ytm { color: var(--best); }
 .stale { color: var(--warn); }
