@@ -1,6 +1,6 @@
-"""Récupération des obligations d'État françaises cotées sur Euronext Paris.
+"""Fetch French government bonds listed on Euronext Paris.
 
-Source : l'API JSON qui alimente l'annuaire des obligations d'Euronext Live
+Source: the JSON API behind the Euronext Live bond directory
 (https://live.euronext.com/fr/products/fixed-income/paris/list).
 """
 
@@ -26,7 +26,7 @@ class Quote:
     mic: str
     name: str
     maturity: date
-    last_price: float          # prix pied de coupon, en % du nominal
+    last_price: float          # clean price, in % of face value
     last_trade: datetime | None
 
     @property
@@ -46,13 +46,13 @@ def _post(session: requests.Session, start: int) -> dict:
                              timeout=90)
             r.raise_for_status()
             page = r.json()
-            if page.get("iTotalRecords") is None:  # page vide intermittente : {"iTotalRecords": null, "aaData": []}
-                raise ValueError("page vide")
+            if page.get("iTotalRecords") is None:  # intermittent: {"iTotalRecords": null, "aaData": []}
+                raise ValueError("empty page")
             return page
-        except (requests.RequestException, ValueError) as e:  # réponse vide intermittente
+        except (requests.RequestException, ValueError) as e:  # intermittent empty response
             last_error = e
             time.sleep(2 + 3 * attempt)
-    raise RuntimeError(f"Euronext injoignable (offset {start}) : {last_error}")
+    raise RuntimeError(f"Euronext unreachable (offset {start}): {last_error}")
 
 
 def fetch_rows() -> list[list[str]]:
@@ -73,9 +73,9 @@ def _parse_price(cell: str) -> float | None:
 
 
 def _parse_trade(cell: str) -> datetime | None:
-    # Deux présentations, date et heure collées une fois le HTML retiré :
-    #   échange ancien :      "25 Sep 202617:23 CEST" (date affichée, heure en infobulle)
-    #   échange du jour même : "09:00 CEST30 Sep 2026" (heure affichée, date en infobulle)
+    # Two layouts, date and time glued together once the HTML is stripped:
+    #   older trade:      "25 Sep 202617:23 CEST" (date shown, time in the tooltip)
+    #   trade of the day: "09:00 CEST30 Sep 2026" (time shown, date in the tooltip)
     text = _text(cell)
     d = re.search(r"(\d{2}) (\w{3}) (\d{4})", text)
     if not d or d.group(2) not in _MONTHS:

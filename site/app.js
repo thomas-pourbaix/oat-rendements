@@ -1,4 +1,4 @@
-const KIND_LABEL = { strip: "strip", indexee_euro: "OAT€i", indexee_france: "OATi" };
+const KIND_LABEL = { strip: "strip", inflation_euro: "OAT€i", inflation_france: "OATi" };
 const STALE_DAYS = 30;
 
 const $ = (sel) => document.querySelector(sel);
@@ -55,7 +55,7 @@ function render() {
       <td class="num">${num(b.coupon, 2)} %</td>
       <td class="num">${num(b.price, 2)} %</td>
       <td class="${stale ? "stale" : ""}" title="${stale ? "Cours ancien : peu représentatif du prix actuel" : ""}">${b.last_trade ? dateFr(b.last_trade) : "–"}</td>
-      <td class="num ytm">${pct(b.ytm)}${b.kind.startsWith("indexee") ? " réel" : ""}</td>
+      <td class="num ytm">${pct(b.ytm)}${b.kind.startsWith("inflation") ? " réel" : ""}</td>
       <td class="num">${Math.round(final).toLocaleString("fr-FR")} €</td>
     </tr>`;
   }).join("") : `<tr><td colspan="8" class="empty">Aucune OAT cotée pour cet horizon. Élargissez la fenêtre ou cochez d'autres types de titres.</td></tr>`;

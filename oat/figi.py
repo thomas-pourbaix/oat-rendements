@@ -1,8 +1,8 @@
-"""Caractéristiques des titres (coupon, type) via l'API publique OpenFIGI.
+"""Bond characteristics (coupon, kind) from the public OpenFIGI API.
 
-Pour une OAT, OpenFIGI renvoie un ticker du type « FRTR 3.25 02/25/32 OAT » :
-coupon annuel 3,25 %, échéance, et suffixe indiquant la famille du titre.
-Sans clé d'API : 10 ISIN par requête, 25 requêtes par minute.
+For an OAT, OpenFIGI returns a ticker such as "FRTR 3.25 02/25/32 OAT":
+3.25 % annual coupon, maturity, and a suffix giving the bond family.
+Without an API key: 10 ISINs per request, 25 requests per minute.
 """
 
 import re
@@ -13,14 +13,14 @@ import requests
 URL = "https://api.openfigi.com/v3/mapping"
 BATCH = 10
 
-# suffixe du ticker -> famille
-KINDS = {"OAT": "nominale", "OATe": "indexee_euro", "OATi": "indexee_france"}
+# ticker suffix -> bond family
+KINDS = {"OAT": "nominal", "OATe": "inflation_euro", "OATi": "inflation_france"}
 
 
 def _classify(ticker: str, name: str) -> str:
     if ticker.startswith("FRTRD") or "STRP" in name.upper():
         return "strip"
-    return KINDS.get(ticker.split()[-1], "nominale")
+    return KINDS.get(ticker.split()[-1], "nominal")
 
 
 def _describe(item: dict) -> dict | None:
@@ -52,10 +52,10 @@ def describe(isins: list[str]) -> dict[str, dict]:
             r.raise_for_status()
             break
         else:
-            raise RuntimeError("OpenFIGI : limite de requêtes dépassée")
+            raise RuntimeError("OpenFIGI: rate limit exceeded")
         for isin, item in zip(chunk, r.json()):
             desc = _describe(item)
             if desc:
                 out[isin] = desc
-        time.sleep(2.5)  # reste sous 25 requêtes / minute
+        time.sleep(2.5)  # stay under 25 requests per minute
     return out

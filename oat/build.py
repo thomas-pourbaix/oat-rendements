@@ -1,6 +1,6 @@
-"""Construit site/data/oats.json : toutes les OAT cotées et leur rendement à l'échéance.
+"""Build site/data/oats.json: every listed OAT and its yield to maturity.
 
-Usage : python -m oat.build [--out site/data/oats.json]
+Usage: python -m oat.build [--out site/data/oats.json]
 """
 
 import argparse
@@ -34,8 +34,8 @@ def build(today: date) -> dict:
             coupon = _coupon_from_name(q.name)
         if coupon is None:
             continue
-        kind = spec.get("kind", "nominale")
-        if STRIP_NAME.search(q.name):  # démembrements : coupons (IPMT) ou principal (PPMT)
+        kind = spec.get("kind", "nominal")
+        if STRIP_NAME.search(q.name):  # stripped bonds: coupons (IPMT) or principal (PPMT)
             kind = "strip"
         ytm = yield_to_maturity(q.last_price, coupon, settlement, q.maturity)
         bonds.append({
@@ -69,7 +69,7 @@ def main() -> None:
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(data, ensure_ascii=False, indent=1))
-    print(f"{data['count']} titres écrits dans {out}")
+    print(f"{data['count']} bonds written to {out}")
 
 
 if __name__ == "__main__":

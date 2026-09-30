@@ -1,19 +1,21 @@
-# Rendement des OAT à l'échéance
+# OAT yield to maturity
 
-Mini-application qui liste toutes les OAT (obligations de l'État français) cotées sur Euronext Paris et calcule leur **rendement annuel si on les garde jusqu'à l'échéance** (taux actuariel). On choisit un horizon de *n* ans et la page affiche les titres qui arrivent à échéance autour de cet horizon.
+Small web app listing every OAT (French government bond) listed on Euronext Paris with its **annual yield if held to maturity**. Pick a horizon of *n* years and the page shows the bonds maturing around that horizon. The page is in French.
 
-**En ligne : https://thomas-pourbaix.github.io/oat-rendements/**
+**Live: https://thomas-pourbaix.github.io/oat-rendements/**
 
-## Fonctionnement
+## How it works
 
-1. Chaque soir de semaine, une GitHub Action exécute `python -m oat.build` :
-   - [oat/euronext.py](oat/euronext.py) récupère les obligations de l'émetteur « REPUBLIC OF FRANCE » et leur dernier cours via l'API JSON d'Euronext Live ;
-   - [oat/figi.py](oat/figi.py) récupère le coupon et le type de chaque titre (OAT classique, OATi, OAT€i, strip) via l'API publique [OpenFIGI](https://www.openfigi.com/api) ;
-   - [oat/yields.py](oat/yields.py) calcule le taux actuariel : coupon annuel, coupon couru ACT/ACT ICMA, règlement à J+2 ouvrés ;
-   - le résultat est écrit dans `site/data/oats.json`.
-2. Le dossier `site/` (HTML/JS statique) est publié sur GitHub Pages ; le filtrage par horizon se fait dans le navigateur.
+1. Every weekday evening, a GitHub Action runs `python -m oat.build`:
+   - [oat/euronext.py](oat/euronext.py) fetches the bonds issued by "REPUBLIC OF FRANCE" and their last price from the Euronext Live JSON API;
+   - [oat/figi.py](oat/figi.py) fetches each bond's coupon and kind (nominal OAT, OATi, OAT€i, strip) from the public [OpenFIGI](https://www.openfigi.com/api) API;
+   - [oat/yields.py](oat/yields.py) computes the yield to maturity: annual coupon, ACT/ACT ICMA accrued interest, T+2 business days settlement;
+   - the result is written to `site/data/oats.json`.
+2. The `site/` folder (static HTML/JS) is published on GitHub Pages; filtering by horizon happens in the browser.
 
-## En local
+Expected behaviour is catalogued in [INVARIANTS.md](INVARIANTS.md), changes in [CHANGELOG.md](CHANGELOG.md).
+
+## Running locally
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt pytest
@@ -22,15 +24,15 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt pytest
 python3 -m http.server 8765 -d site
 ```
 
-## Limites
+## Limits
 
-- Le rendement est calculé sur le **dernier cours échangé**, pas sur le prix vendeur du carnet d'ordres : sur un titre peu échangé, l'écart peut être significatif. La date du cours est affichée.
-- Rendement **brut** : ni frais de courtage ni fiscalité.
-- Pour les OATi / OAT€i, le rendement affiché est un rendement réel (hors inflation).
-- Pas un conseil en investissement.
+- The yield uses the **last traded price**, not the ask price of the order book: on a thinly traded bond the gap can be significant. The date of the price is shown.
+- **Gross** yield: no brokerage fees, no taxes.
+- For OATi / OAT€i, the displayed yield is a real yield (before inflation).
+- Not investment advice.
 
-## Licence
+## License
 
 Copyright (C) 2026 Thomas Pourbaix
 
-Ce programme est un logiciel libre, distribué sous licence [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only). Toute version modifiée mise à disposition, y compris via un service en ligne, doit publier son code source sous la même licence.
+This program is free software, released under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only). Any modified version made available, including over a network, must publish its source code under the same license.

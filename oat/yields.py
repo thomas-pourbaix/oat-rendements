@@ -1,14 +1,14 @@
-"""Calcul du rendement actuariel à l'échéance d'une OAT.
+"""Yield to maturity of an OAT.
 
-Conventions du marché des OAT :
-- coupon annuel, versé chaque année à la date anniversaire de l'échéance ;
-- coupon couru en base exact/exact (ACT/ACT ICMA) ;
-- prix coté pied de coupon, en % du nominal ;
-- règlement-livraison à J+2 ouvrés.
+OAT market conventions:
+- annual coupon, paid every year on the maturity anniversary date;
+- accrued interest on an actual/actual basis (ACT/ACT ICMA);
+- quoted clean price, in % of face value;
+- settlement two business days after trade (T+2).
 
-Le rendement est le taux r tel que :
-    prix plein = somme des flux futurs actualisés à (1 + r) ** t,
-t étant exprimé en périodes de coupon (années) selon ACT/ACT ICMA.
+The yield is the rate r such that:
+    dirty price = sum of future cash flows discounted at (1 + r) ** t,
+t being expressed in coupon periods (years) under ACT/ACT ICMA.
 """
 
 from datetime import date, timedelta
@@ -25,12 +25,12 @@ def add_business_days(d: date, n: int) -> date:
 def _anniversary(maturity: date, year: int) -> date:
     try:
         return maturity.replace(year=year)
-    except ValueError:  # 29 février
+    except ValueError:  # 29 February
         return maturity.replace(year=year, day=28)
 
 
 def coupon_dates(settlement: date, maturity: date) -> tuple[date, list[date]]:
-    """Date du dernier coupon détaché et liste des dates de coupon futures."""
+    """Date of the last paid coupon and list of future coupon dates."""
     future = []
     y = maturity.year
     d = maturity
@@ -58,11 +58,11 @@ def dirty_price(rate: float, coupon: float, settlement: date, maturity: date) ->
 
 
 def yield_to_maturity(clean_price: float, coupon: float, settlement: date, maturity: date) -> float:
-    """Taux actuariel annuel (0.031 = 3,1 %) pour un achat au prix pied de coupon donné."""
+    """Annual yield to maturity (0.031 = 3.1 %) when buying at the given clean price."""
     if maturity <= settlement:
-        raise ValueError("titre échu")
+        raise ValueError("bond has matured")
     target = clean_price + accrued_interest(coupon, settlement, maturity)
-    lo, hi = -0.99, 10.0  # le prix plein décroît avec le taux : dichotomie
+    lo, hi = -0.99, 10.0  # dirty price decreases with the rate: bisection
     for _ in range(200):
         mid = (lo + hi) / 2
         if dirty_price(mid, coupon, settlement, maturity) > target:
