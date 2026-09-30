@@ -46,8 +46,8 @@ def _post(session: requests.Session, start: int) -> dict:
                              timeout=90)
             r.raise_for_status()
             page = r.json()
-            if page.get("iTotalRecords") is None:  # intermittent: {"iTotalRecords": null, "aaData": []}
-                raise ValueError("empty page")
+            if page.get("iTotalRecords") is None:  # page vide intermittente : {"iTotalRecords": null, "aaData": []}
+                raise ValueError("page vide")
             return page
         except (requests.RequestException, ValueError) as e:  # réponse vide intermittente
             last_error = e
@@ -73,9 +73,9 @@ def _parse_price(cell: str) -> float | None:
 
 
 def _parse_trade(cell: str) -> datetime | None:
-    # Two layouts, date and time glued together once the HTML is stripped:
-    #   older trade:     "25 Sep 202617:23 CEST" (date shown, time in the tooltip)
-    #   trade of the day: "09:00 CEST30 Sep 2026" (time shown, date in the tooltip)
+    # Deux présentations, date et heure collées une fois le HTML retiré :
+    #   échange ancien :      "25 Sep 202617:23 CEST" (date affichée, heure en infobulle)
+    #   échange du jour même : "09:00 CEST30 Sep 2026" (heure affichée, date en infobulle)
     text = _text(cell)
     d = re.search(r"(\d{2}) (\w{3}) (\d{4})", text)
     if not d or d.group(2) not in _MONTHS:
