@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Thomas Pourbaix
+# SPDX-License-Identifier: AGPL-3.0-only
+
 """Fetch French government bonds listed on Euronext Paris.
 
 Source: the JSON API behind the Euronext Live bond directory

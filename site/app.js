@@ -1,3 +1,6 @@
+/* Copyright (C) 2026 Thomas Pourbaix
+   SPDX-License-Identifier: AGPL-3.0-only */
+
 const KIND_LABEL = { strip: "strip", inflation_euro: "OAT€i", inflation_france: "OATi" };
 const STALE_DAYS = 30;
 

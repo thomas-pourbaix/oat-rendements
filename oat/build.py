@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Thomas Pourbaix
+# SPDX-License-Identifier: AGPL-3.0-only
+
 """Build site/data/oats.json: every listed OAT and its yield to maturity.
 
 Usage: python -m oat.build [--out site/data/oats.json]

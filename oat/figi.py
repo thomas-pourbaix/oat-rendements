@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Thomas Pourbaix
+# SPDX-License-Identifier: AGPL-3.0-only
+
 """Bond characteristics (coupon, kind) from the public OpenFIGI API.
 
 For an OAT, OpenFIGI returns a ticker such as "FRTR 3.25 02/25/32 OAT":
