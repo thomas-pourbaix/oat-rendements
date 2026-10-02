@@ -38,6 +38,12 @@ Install: `chrome://extensions`, developer mode, "Load unpacked", pick `garde-fou
 
 Security: the extension asks for no permission and stores nothing. Its only network request is a cookie-less, referrer-less GET of the public `oats.json`, whose rows are type-checked before use (INV-025). It runs inside a bank session, so review any change to `garde-fou/` before reloading it.
 
+## Price alert (email)
+
+After each evening build, CI runs `python -m oat.alert`: if the last price of a watched bond is at or above a threshold, it sends an email through a Gmail account, every evening while the threshold is met. Everything is set as repository secrets (Settings → Secrets and variables → Actions), never in the repository: `ALERT_ISIN`, `ALERT_THRESHOLD` (price in %, e.g. `98`), `SMTP_USER` (Gmail address), `SMTP_PASSWORD` (a Google [app password](https://myaccount.google.com/apppasswords), not the account password) and optionally `ALERT_EMAIL` (recipient, defaults to `SMTP_USER`). Without them the step is skipped. The repository and its logs are public, so the script prints none of these values (INV-027).
+
+GitHub disables scheduled workflows of a public repository after 60 days without activity (it emails a warning first); re-enable it from the Actions tab.
+
 ## Limits
 
 - The yield uses the **last traded price**, not the ask price of the order book: on a thinly traded bond the gap can be significant. The date of the price is shown.

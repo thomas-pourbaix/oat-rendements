@@ -28,6 +28,10 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - run: python -m pytest -q
       - run: python -m oat.build --out site/data/oats.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oats-data
+          path: site/data/oats.json
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
@@ -41,3 +45,26 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Price alert: emails the owner when a watched bond reaches a threshold. All settings are secrets,
+  # and the script prints none of them (public repository and logs). Separate job so that a mail
+  # failure never blocks publication.
+  alert:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          name: oats-data
+          path: site/data
+      - run: python -m oat.alert --data site/data/oats.json
+        env:
+          ALERT_ISIN: ${{ secrets.ALERT_ISIN }}
+          ALERT_THRESHOLD: ${{ secrets.ALERT_THRESHOLD }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}

@@ -6,6 +6,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Price alert: after each evening build, CI emails the owner when a watched bond's last price reaches a threshold (`oat/alert.py`). ISIN, threshold and mail account are repository secrets, never printed in the public logs (INV-026 to INV-028).
 - `garde-fou/`: Chrome extension on the bank's order confirmation page. It blocks an OAT order whose limit is more than 1.5 points from the last price, that the bank flags with "écart de cours important", whose price cannot be checked, or that has no limit; otherwise it asks for the intended maturity year (summary blurred, one attempt) and unlocks "Confirmer" 5 seconds later (INV-016 to INV-025). It reads the bank's page by its element ids, taken from saved copies of the real page, keeps the bank's other actions working while an order is blocked, and type-checks `oats.json` so a tampered file cannot inject markup into the bank session.
 - Calculator: optional brokerage fee field, giving the yield net of fees, total cost and unit cost price.
 - `comprendre.html`: how buying, holding and selling an OAT works, on a real 40 000 € order (price, accrued interest, fees, cash flows, resale scenarios); its figures are checked against the code (INV-015). A "which fees, when" section says brokerage fees apply on buying and reselling only, not on coupons or redemption, and mentions custody fees.

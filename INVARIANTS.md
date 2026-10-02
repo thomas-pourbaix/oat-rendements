@@ -7,7 +7,7 @@
 > Do not read the code to write a test: read the invariant and write the test that checks
 > **that** rule. If an invariant is ambiguous, raise a question rather than interpreting the code.
 
-**Scope**: yield computation (`oat/yields.py`), Euronext data fetching (`oat/euronext.py`), the page (`site/`), calculator included, and the order guard (`garde-fou/`).
+**Scope**: yield computation (`oat/yields.py`), Euronext data fetching (`oat/euronext.py`), the page (`site/`), calculator included, the order guard (`garde-fou/`) and the price alert (`oat/alert.py`).
 
 **Legend**: criticality `C` / `H` / `M` / `L` · status ✅ verified · ⚠️ partial · ❌ untested (debt) · 🐛 known bug.
 
@@ -193,3 +193,20 @@ shown in the panel is escaped.
 ### To write (backlog)
 - An unreadable order summary (bank page changed) blocks the order: implemented, not tested; the test
   page always has a summary.
+
+## 7. Price alert (`oat/alert.py`, run by CI after each data build)
+
+### INV-026 [H] ✅ A mail is sent if and only if the watched bond's last price is at or above the threshold
+- **Why**: the owner waits for a price to act on a position; a missed alert or a false one both lead to
+  a wrong decision.
+- **Coverage**: `tests/test_alert.py::TestAlertFiresIffPriceReachesThreshold` (just below, exactly at,
+  and above the threshold).
+
+### INV-027 [C] ✅ The job log never shows the watched ISIN, threshold, price, addresses or password
+- **Why**: the repository and its CI logs are public; any of these values reveals what the owner holds
+  or exposes the mail account.
+- **Coverage**: `tests/test_alert.py::TestAlertNeverLogsItsConfiguration` (triggered and not triggered).
+
+### INV-028 [H] ✅ A watched bond missing from the data fails the job
+- **Why**: an alert that can never fire must not look like "not triggered"; a red CI run is visible.
+- **Coverage**: `tests/test_alert.py::TestMissingWatchedBondFails`.
