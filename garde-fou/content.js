@@ -1,7 +1,7 @@
 /* Copyright (C) 2026 Thomas Pourbaix
    SPDX-License-Identifier: AGPL-3.0-only */
 
-/* Order guard: runs on CIC's "2/2 Passer un ordre" page.
+/* Order guard: runs on CIC's order confirmation page ("2/2 Passer un ordre", ORDR_ValeurValidation2.aspx).
    Neutralises the "Confirmer" button until the order passes the checks of check.js, then asks the
    user for the maturity year they INTEND, with the summary blurred: a wrong ISIN then shows up as a
    mismatch between the intention and the bond actually selected (INV-017). */
@@ -12,25 +12,31 @@ const DELAY_SECONDS = 5;
 
 let state = null; // { button, summary, allowed }
 
+// Element ids of the bank's page, read from saved copies of ORDR_ValeurValidation2.aspx (2026-10-02).
+const SUMMARY = "#esdtblCaractOrd";
+const FIELDS = ["#lbSens", "#lbInfo", "#lbInfoModalite"]; // side, "1,00 EUR OAT ... (ISIN)", limit
+const CONFIRM = "#btnConfirmer"; // <input type="image" alt="Confirmer">
+const BANK_MESSAGES = ".blocmsg";
+
+// Fallback in case the id changes: any button-like element labelled "Confirmer".
 function findConfirmButton() {
-  return [...document.querySelectorAll("button, a, input[type=submit], input[type=button]")]
-    .find((el) => (el.value || el.textContent).trim() === "Confirmer");
+  return document.querySelector(CONFIRM)
+    || [...document.querySelectorAll("button, a, input")]
+      .find((el) => (el.value || el.alt || el.textContent || "").trim() === "Confirmer");
 }
 
-// The bank's markup is unknown: look for leaf elements by their text.
-function findLeaf(pattern) {
-  return [...document.querySelectorAll("h1, h2, h3, th, td, div, span, p, caption")]
-    .find((el) => el.children.length === 0 && pattern.test(el.textContent));
-}
-
-const isOrderPage = () => Boolean(findLeaf(/Passer un ordre/));
-const findSummary = () => findLeaf(/^\s*Caractéristiques de l'opération\s*$/)?.closest("table") || null;
+const findSummary = () => document.querySelector(SUMMARY);
+const summaryText = () => FIELDS.map((id) => document.querySelector(id)?.textContent ?? "").join("\n");
+const bankWarning = () => [...document.querySelectorAll(BANK_MESSAGES)]
+  .some((el) => /[ée]cart de cours important/i.test(el.textContent));
 
 // While the order is not allowed, any click, Enter or form submission aimed at "Confirmer" is
 // swallowed, however the page listens to it (capture phase on window runs first). INV-016.
 function intercept(e) {
   if (!state || state.allowed || !state.button) return;
-  const aimed = e.type === "submit" ? e.target.contains(state.button) : e.composedPath().includes(state.button);
+  // A submit is blocked only when "Confirmer" is its submitter: the bank's page is one big form,
+  // and its other actions must keep working while the order is blocked.
+  const aimed = e.type === "submit" ? e.submitter === state.button : e.composedPath().includes(state.button);
   const key = e.type !== "keydown" || e.key === "Enter" || e.key === " ";
   if (aimed && key) {
     e.preventDefault();
@@ -99,8 +105,8 @@ function allowAfterDelay(order, result) {
   const years = result.year - new Date().getFullYear();
   const div = showPanel(
     `<p class="gf-title">Contrôles passés</p>
-     <p>${escape(order.label)} (${order.isin}) : remboursée en <strong>${result.year}</strong>, dans ${years} an${years > 1 ? "s" : ""}.</p>
-     <p>Limite <strong>${order.limit.toLocaleString("fr-FR")} %</strong>, dernier cours connu <strong>${result.price.toLocaleString("fr-FR")} %</strong>.</p>
+     <p>${escape(order.label)} (${escape(order.isin)}) : remboursée en <strong>${escape(result.year)}</strong>, dans ${years} an${years > 1 ? "s" : ""}.</p>
+     <p>Limite <strong>${escape(order.limit.toLocaleString("fr-FR"))} %</strong>, dernier cours connu <strong>${escape(result.price.toLocaleString("fr-FR"))} %</strong>.</p>
      <p class="gf-strong" id="gf-countdown"></p>`,
     "pass"
   );
@@ -120,17 +126,25 @@ function allowAfterDelay(order, result) {
   tick();
 }
 
+// oats.json is external input running into a bank session: only a row with the expected types is
+// kept, so a tampered file can at worst make the guard block (unknown price), never inject markup
+// into the page (INV-025). The request carries no cookie and no referrer: GitHub learns nothing
+// about the bank page it is called from.
 async function loadBond(isin) {
   try {
-    const data = await (await fetch(DATA_URL, { cache: "no-store" })).json();
-    return data.bonds.find((b) => b.isin === isin) || null;
+    const response = await fetch(DATA_URL, { cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer" });
+    const row = (await response.json()).bonds.find((b) => b.isin === isin);
+    const valid = row
+      && Number.isFinite(row.price) && row.price > 0 && row.price < 1000
+      && /^\d{4}-\d{2}-\d{2}$/.test(row.maturity)
+      && (row.last_trade == null || !Number.isNaN(Date.parse(row.last_trade)));
+    return valid ? { price: row.price, maturity: row.maturity, last_trade: row.last_trade } : null;
   } catch {
     return null;
   }
 }
 
 async function start() {
-  if (!isOrderPage()) return;
   const button = findConfirmButton();
   if (!button || (state && state.button === button)) return;
   const summary = findSummary();
@@ -142,14 +156,14 @@ async function start() {
     return;
   }
   // Only OAT orders are checked: shares have no price in oats.json.
-  if (!/\bOAT\b/.test(summary.innerText)) {
+  if (!/\bOAT\b/.test(summaryText())) {
     state.allowed = true;
     neutralise(button, false);
     return;
   }
-  const order = Guard.readOrder(summary.innerText);
+  const order = Guard.readOrder(summaryText());
   // The bank's warning is a banner above the summary, not inside it.
-  order.bankWarning = /[ée]cart de cours important/i.test(document.body.innerText);
+  order.bankWarning = bankWarning();
   const result = Guard.evaluate(order, order.isin ? await loadBond(order.isin) : null);
   if (result.verdict === "block") showBlock(result.reasons);
   else askIntention(order, result);

@@ -176,6 +176,20 @@ field disappears.
   irreversible click.
 - **Coverage**: `tests/test_guard.py::TestConfirmUnlocksOnlyAfterTheDelay`.
 
+### INV-024 [H] ✅ While an order is blocked, the bank's other actions still work
+The bank's page is a single form: blocking a submission only when "Confirmer" is its submitter keeps
+"Modifier" and "Abandonner" usable.
+- **Why**: the guard's only way out is these actions; blocking the whole form would trap the user.
+- **Coverage**: `tests/test_guard.py::TestBankActionsStayAvailableWhenBlocked`.
+
+### INV-025 [C] ✅ A tampered `oats.json` row never injects markup into the bank's page
+A row whose price is not a finite number in (0, 1000), whose maturity is not `YYYY-MM-DD` or whose last
+trade date does not parse is treated as an unknown price (the order is blocked, INV-018); every value
+shown in the panel is escaped.
+- **Why**: the guard runs inside a bank session and reads a file served from elsewhere; markup in that
+  file would run with the page's privileges. External input contract: the test feeds a hostile row.
+- **Coverage**: `tests/test_guard.py::TestTamperedDataNeverReachesThePage`.
+
 ### To write (backlog)
 - An unreadable order summary (bank page changed) blocks the order: implemented, not tested; the test
   page always has a summary.

@@ -34,7 +34,9 @@ python3 -m http.server 8765 -d site
 - The order is blocked when the bank shows "écart de cours important", when the limit is more than 1.5 points away from the last traded price (from the published `oats.json`), when that price is unknown or older than 10 days, when the order has no limit, or when the order summary cannot be read.
 - Otherwise the summary is blurred and the user must type the maturity year they intend. One attempt only: a year that differs from the selected bond blocks the order. A matching year unblocks "Confirmer" after 5 seconds.
 
-Install: `chrome://extensions`, developer mode, "Load unpacked", pick `garde-fou/`. Its tests (`tests/test_guard.py`) run it in Chromium on [garde-fou/test-page.html](garde-fou/test-page.html), a stand-in for the bank's page.
+Install: `chrome://extensions`, developer mode, "Load unpacked", pick `garde-fou/`. It only runs on the bank's order confirmation page (`ORDR_ValeurValidation2.aspx`) and reads it through the element ids of that page (`#esdtblCaractOrd`, `#lbInfo`, `#btnConfirmer`…); if they change, the guard blocks instead of letting orders through. Its tests (`tests/test_guard.py`) run it in Chromium on [garde-fou/test-page.html](garde-fou/test-page.html), a stand-in that keeps those ids and the page's single form.
+
+Security: the extension asks for no permission and stores nothing. Its only network request is a cookie-less, referrer-less GET of the public `oats.json`, whose rows are type-checked before use (INV-025). It runs inside a bank session, so review any change to `garde-fou/` before reloading it.
 
 ## Limits
 

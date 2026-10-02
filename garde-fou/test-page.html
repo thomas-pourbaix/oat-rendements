@@ -1,40 +1,65 @@
 <!doctype html>
 <!-- Copyright (C) 2026 Thomas Pourbaix
      SPDX-License-Identifier: AGPL-3.0-only -->
-<!-- Minimal stand-in for CIC's "2/2 Passer un ordre" page, to run the order guard outside the bank's
-     site (tests/test_guard.py). Query string: isin, label, limit ("none" for a market order), side (Acheter|Vendre),
+<!-- Stand-in for the bank's order confirmation page (ORDR_ValeurValidation2.aspx), to run the order
+     guard outside the bank's site (tests/test_guard.py). It keeps the element ids, the button types
+     and the single page-wide form of a saved copy of the real page (2026-10-02), without its content.
+     Query string: isin, label, limit ("none" for a market order), side (Acheter|Vendre),
      warning=1 for the bank's "écart de cours" banner. Prices come from data/oats.json next to it. -->
 <html lang="fr" data-guard-data-url="data/oats.json">
 <head>
 <meta charset="utf-8">
 <title>Page d'ordre (test)</title>
 <link rel="stylesheet" href="garde-fou.css">
-<style>body { font: 16px system-ui; max-width: 900px; margin: 24px auto; color: #111; } td { padding: 4px 12px; }</style>
+<style>
+  body { font: 16px system-ui; max-width: 900px; margin: 24px auto; color: #111; }
+  td { padding: 4px 12px; }
+  #btnConfirmer { width: 120px; height: 32px; }
+</style>
 </head>
 <body>
-<h1>2/2 Passer un ordre</h1>
-<div id="warning">⚠ Ecart de cours important par rapport au cours connu à la saisie</div>
-<table>
-  <tr><th colspan="2">Caractéristiques de l'opération</th></tr>
-  <tr><td id="side"></td><td id="bond"></td></tr>
-  <tr><td>Pour un montant net estimatif de</td><td>0,99 EUR</td></tr>
-</table>
-<form id="order">
-  <button type="button">Modifier</button> <button type="button">Abandonner</button>
-  <button type="submit">Confirmer</button>
+<form id="aspnetForm" method="post">
+  <p>2/2 Passer un ordre <span id="TitreDePage_spanNoteTitre"></span></p>
+  <div id="BlocsInformation">
+    <div class="blocmsg alerte"><p>Vous n'avez pas de connaissance et expérience (Oblig /titres créances).</p></div>
+    <div class="blocmsg alerte" id="warning"><p>Ecart de cours important par rapport au cours connu à la saisie</p></div>
+  </div>
+  <table summary="Récapitulatif de l'ordre" id="esdtblCaractOrd" class="liste bourse">
+    <thead><tr><th colspan="2"><span>Caractéristiques de l'opération</span></th></tr></thead>
+    <tbody>
+      <tr>
+        <td>&nbsp;<span id="lbSens"></span></td>
+        <td><strong><span id="lbInfo"></span></strong><br>
+          <span id="lbInfoPlace">EURONEXT PARIS</span><br>
+          <span id="lbInfoModalite"></span><br>
+          <span id="lbInfoType">Au comptant</span></td>
+      </tr>
+      <tr><td>Pour un montant net estimatif de</td><td>0,99&nbsp;EUR</td></tr>
+      <tr><td>Etre informé de l'exécution</td><td><input type="radio" name="radConfirmationOrdre" id="rMail" checked> Par e-mail</td></tr>
+    </tbody>
+  </table>
+  <div id="BlocBoutons">
+    <input type="hidden" name="Confirmation" id="Confirmation" value="0">
+    <input type="image" name="btnConfirmer" id="btnConfirmer" alt="Confirmer"
+           onclick="document.getElementById('Confirmation').value = 1;">
+    <input type="submit" name="btnModifier" id="btnModifier" value="Modifier">
+    <a href="#abandon" id="lnkAbandonner">Abandonner</a>
+  </div>
 </form>
 <p id="sent" hidden>ORDRE ENVOYÉ</p>
+<p id="modified" hidden>RETOUR À LA SAISIE</p>
 <script>
   const p = new URLSearchParams(location.search);
-  document.getElementById("side").textContent = p.get("side") || "Acheter";
   const limit = p.get("limit") || "97,00";
-  document.getElementById("bond").innerText =
-    `1,00 EUR ${p.get("label") || "OAT 4%05-25042055"} (${p.get("isin") || "FR0010171975"})\n` +
-    `EURONEXT PARIS\n${limit === "none" ? "Au marché" : `A cours limité ( limite : ${limit} %)`}\nAu comptant`;
+  document.getElementById("lbSens").textContent = p.get("side") || "Acheter";
+  document.getElementById("lbInfo").textContent =
+    `1,00  EUR ${p.get("label") || "OAT 4%05-25042055"} (${p.get("isin") || "FR0010171975"})`;
+  document.getElementById("lbInfoModalite").textContent =
+    limit === "none" ? "Au marché" : `A cours limité ( limite : ${limit} %)`;
   if (!p.has("warning")) document.getElementById("warning").remove();
-  document.getElementById("order").addEventListener("submit", (e) => {
+  document.getElementById("aspnetForm").addEventListener("submit", (e) => {
     e.preventDefault();
-    document.getElementById("sent").hidden = false;
+    document.getElementById(e.submitter?.id === "btnModifier" ? "modified" : "sent").hidden = false;
   });
 </script>
 <script src="check.js"></script>

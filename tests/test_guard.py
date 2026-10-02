@@ -5,6 +5,7 @@
 
 import functools
 import json
+import re
 import shutil
 import threading
 from datetime import datetime, timedelta
@@ -30,6 +31,7 @@ BONDS = [
     _bond("FR0000000011", 82.82, YEAR + 29, 1),   # long bond far below par, like the 4 % 2055
     _bond("FR0000000012", 98.25, YEAR + 2, 1),    # short bond near par
     _bond("FR0000000013", 98.25, YEAR + 2, 11),   # quote just past the 10-day limit
+    {**_bond("FR0000000014", 98.25, YEAR + 2, 1), "price": '<img src=x onerror="document.body.dataset.pwned=1">'},
 ]
 LONG = {"isin": "FR0000000011", "label": f"OAT 4%05-2504{YEAR + 29}"}
 SHORT = {"isin": "FR0000000012", "label": f"OAT 2,4%25-2504{(YEAR + 2) % 100:02d}"}
@@ -62,7 +64,7 @@ def order(page: Page, guard_url):
 
 def try_to_confirm(page: Page):
     """Every way of sending the order: real click (forced through the neutralised style), synthetic click, Enter."""
-    confirm = page.locator("button[type=submit]")
+    confirm = page.locator("#btnConfirmer")
     confirm.click(force=True)
     confirm.dispatch_event("click")
     confirm.focus()
@@ -141,7 +143,7 @@ class TestSummaryIsHiddenWhileAskingTheYear:
     """INV-022: while the guard asks for the intended year, the order summary is blurred."""
 
     def test_blurred(self, order):
-        expect(order(**SHORT, limit="98,50").locator("table")).to_have_class("gf-blurred")
+        expect(order(**SHORT, limit="98,50").locator("#esdtblCaractOrd")).to_have_class(re.compile(r"\bgf-blurred\b"))
 
 
 class TestConfirmUnlocksOnlyAfterTheDelay:
@@ -154,5 +156,26 @@ class TestConfirmUnlocksOnlyAfterTheDelay:
         try_to_confirm(page)
         expect(page.locator("#sent")).to_be_hidden()
         expect(page.locator("#gf-countdown")).to_have_text("« Confirmer » est débloqué.", timeout=8000)
-        page.locator("button[type=submit]").click()
+        page.locator("#btnConfirmer").click()
         expect(page.locator("#sent")).to_be_visible()
+
+
+class TestBankActionsStayAvailableWhenBlocked:
+    """INV-024: while an order is blocked, the bank's other actions on the page (such as "Modifier") still work."""
+
+    def test_modify_after_block(self, order):
+        page = order(**LONG, limit="97,00")
+        expect(page.locator("#gf-panel.block")).to_be_visible()
+        page.locator("#btnModifier").click()
+        expect(page.locator("#modified")).to_be_visible()
+        expect(page.locator("#sent")).to_be_hidden()
+
+
+class TestTamperedDataNeverReachesThePage:
+    """INV-025: a row of oats.json with unexpected types is treated as an unknown price, and never inserts markup into the bank's page."""
+
+    def test_markup_in_price(self, order):
+        page = order(isin="FR0000000014", label="OAT 1%25-250428", limit="98,00")
+        assert "inconnu ou trop ancien" in blocked_reasons(page), "INV-025: tampered row means unknown price"
+        assert page.locator("#gf-panel img").count() == 0, "INV-025: no markup from the data file"
+        assert page.evaluate("document.body.dataset.pwned") is None, "INV-025: no script from the data file"
