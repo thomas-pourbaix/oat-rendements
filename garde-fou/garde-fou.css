@@ -1,0 +1,35 @@
+/* Copyright (C) 2026 Thomas Pourbaix
+   SPDX-License-Identifier: AGPL-3.0-only */
+
+/* Order guard: panel injected on the order page, blurred summary, neutralised button. */
+
+#gf-panel {
+  margin: 16px 0;
+  padding: 20px 24px;
+  border: 4px solid;
+  border-radius: 6px;
+  font: 18px/1.5 system-ui, sans-serif;
+  color: #111;
+}
+#gf-panel.block { background: #ffe5e5; border-color: #b00000; }
+#gf-panel.ask { background: #fff4d6; border-color: #8a5a00; }
+#gf-panel.pass { background: #e6f4ea; border-color: #1e6b34; }
+#gf-panel .gf-title { margin: 0 0 12px; font-size: 24px; font-weight: 700; }
+#gf-panel .gf-strong { font-weight: 700; }
+#gf-panel .gf-help { font-size: 16px; }
+#gf-panel label { display: block; font-weight: 700; margin-bottom: 8px; }
+#gf-panel input {
+  font: 700 32px/1.2 ui-monospace, monospace;
+  width: 6ch;
+  padding: 4px 8px;
+  border: 3px solid #111;
+  color: #111;
+}
+
+.gf-blurred { filter: blur(8px); user-select: none; pointer-events: none; }
+
+.gf-neutralised {
+  opacity: 0.25 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}

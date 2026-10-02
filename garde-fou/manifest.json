@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Garde-fou ordres d'obligations",
+  "version": "0.1.0",
+  "description": "Bloque un ordre d'obligation dont la limite est loin du marché ou dont l'échéance ne correspond pas à l'intention.",
+  "content_scripts": [
+    {
+      "matches": ["https://www.cic.fr/*"],
+      "js": ["check.js", "content.js"],
+      "css": ["garde-fou.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

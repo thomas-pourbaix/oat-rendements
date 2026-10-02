@@ -27,6 +27,15 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt -r requiremen
 python3 -m http.server 8765 -d site
 ```
 
+## Order guard (browser extension)
+
+[garde-fou/](garde-fou/) is a Chrome extension that steps in on CIC's order confirmation page for an OAT. It is tuned for the user's worst state (tired, rushed): an anomaly **blocks** the order, with no button to override it. The only way out is the bank's own "Modifier" or "Abandonner".
+
+- The order is blocked when the bank shows "écart de cours important", when the limit is more than 1.5 points away from the last traded price (from the published `oats.json`), when that price is unknown or older than 10 days, when the order has no limit, or when the order summary cannot be read.
+- Otherwise the summary is blurred and the user must type the maturity year they intend. One attempt only: a year that differs from the selected bond blocks the order. A matching year unblocks "Confirmer" after 5 seconds.
+
+Install: `chrome://extensions`, developer mode, "Load unpacked", pick `garde-fou/`. Its tests (`tests/test_guard.py`) run it in Chromium on [garde-fou/test-page.html](garde-fou/test-page.html), a stand-in for the bank's page.
+
 ## Limits
 
 - The yield uses the **last traded price**, not the ask price of the order book: on a thinly traded bond the gap can be significant. The date of the price is shown.

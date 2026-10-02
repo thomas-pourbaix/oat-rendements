@@ -7,7 +7,7 @@
 > Do not read the code to write a test: read the invariant and write the test that checks
 > **that** rule. If an invariant is ambiguous, raise a question rather than interpreting the code.
 
-**Scope**: yield computation (`oat/yields.py`), Euronext data fetching (`oat/euronext.py`) and the page (`site/`), calculator included.
+**Scope**: yield computation (`oat/yields.py`), Euronext data fetching (`oat/euronext.py`), the page (`site/`), calculator included, and the order guard (`garde-fou/`).
 
 **Legend**: criticality `C` / `H` / `M` / `L` · status ✅ verified · ⚠️ partial · ❌ untested (debt) · 🐛 known bug.
 
@@ -124,3 +124,58 @@ Accrued interest, dirty price, fees, total paid, gain at maturity, gross and net
 resale scenarios are recomputed by the tests with `oat/yields.py` and must appear as written.
 - **Why**: the figures are written by hand in the page; a typo would teach the wrong thing.
 - **Coverage**: `tests/test_page.py::TestExplainerExampleMatchesTheCode`.
+
+## 6. Order guard (`garde-fou/`, browser extension on the bank's order page)
+
+Design rule shared by this section: the guard is tuned for the user's worst state (tired, rushed).
+"Blocked" means the guard's panel shows the reason and "Confirmer" stays dead, with no override;
+the only way out is the bank's own "Modifier" or "Abandonner".
+
+### INV-016 [C] ✅ An order whose limit is more than 1.5 points worse than the last price is blocked
+Buy limit above the last traded price + 1.5 points, or sell limit below it − 1.5 points, from the
+published `oats.json`.
+- **Why**: a limit far from the market can fill at that limit on a thin order book, and the bank's own
+  check only warns, or rejects beyond a wider gap.
+- **Coverage**: `tests/test_guard.py::TestLimitFarFromTheMarketIsBlocked` (above, below, and a limit
+  inside the gap that is not blocked).
+
+### INV-017 [H] ✅ An order is blocked whenever the bank shows its "écart de cours important" warning
+- **Why**: the bank's warning is an orange banner, next to another banner shown on every order; it is
+  easy to stop seeing.
+- **Coverage**: `tests/test_guard.py::TestBankWarningBlocks`.
+
+### INV-018 [H] ✅ An order is blocked when the last price is unknown or older than 10 days
+- **Why**: without a recent price the limit cannot be checked; the guard fails closed.
+- **Coverage**: `tests/test_guard.py::TestUnverifiablePriceBlocks` (11-day-old quote, unlisted ISIN).
+
+### INV-019 [H] ✅ An order without a price limit is blocked
+- **Why**: a market order on a thinly traded bond can fill at any price.
+- **Coverage**: `tests/test_guard.py::TestOrderWithoutLimitBlocks`.
+
+### INV-020 [C] ✅ Until the guard allows the order, nothing sends it
+No real click, synthetic click or Enter on "Confirmer" submits the order while it is blocked or
+waiting for the intended year.
+- **Why**: a block that a stray click or keypress gets through protects nothing.
+- **Coverage**: `tests/test_guard.py::TestNothingSendsAnOrderBeforeItIsAllowed`. Defence in depth:
+  the button is disabled and events aimed at it are swallowed in the capture phase; the mutation test
+  fails only when both are removed.
+
+### INV-021 [C] ✅ The intended maturity year must be the bond's, with one attempt
+The user types the maturity year they intend; a year other than the bond's blocks the order and the
+field disappears.
+- **Why**: a wrong ISIN is invisible on a price check when the wrong bond trades near the intended
+  price; it shows up as a mismatch between intention and selection.
+- **Coverage**: `tests/test_guard.py::TestIntendedYearMustMatchTheBond`.
+
+### INV-022 [M] ✅ The order summary is blurred while the year is asked
+- **Why**: otherwise the year is copied from the screen instead of recalled from the intention.
+- **Coverage**: `tests/test_guard.py::TestSummaryIsHiddenWhileAskingTheYear`.
+
+### INV-023 [M] ✅ "Confirmer" unlocks only 5 seconds after the right year is typed
+- **Why**: a short pause with the bond, maturity, limit and price shown in plain words, before the
+  irreversible click.
+- **Coverage**: `tests/test_guard.py::TestConfirmUnlocksOnlyAfterTheDelay`.
+
+### To write (backlog)
+- An unreadable order summary (bank page changed) blocks the order: implemented, not tested; the test
+  page always has a summary.

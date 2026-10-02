@@ -6,6 +6,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `garde-fou/`: Chrome extension on the bank's order confirmation page. It blocks an OAT order whose limit is more than 1.5 points from the last price, that the bank flags with "écart de cours important", whose price cannot be checked, or that has no limit; otherwise it asks for the intended maturity year (summary blurred, one attempt) and unlocks "Confirmer" 5 seconds later (INV-016 to INV-023).
 - Calculator: optional brokerage fee field, giving the yield net of fees, total cost and unit cost price.
 - `comprendre.html`: how buying, holding and selling an OAT works, on a real 40 000 € order (price, accrued interest, fees, cash flows, resale scenarios); its figures are checked against the code (INV-015). A "which fees, when" section says brokerage fees apply on buying and reselling only, not on coupons or redemption, and mentions custody fees.
 - "Mon prix d'achat" tab: paste an ISIN, type your buying price, get the yield to maturity at that price (`site/yields.js`, a port of `oat/yields.py` kept identical by INV-011). Direct link: `#calcul`.

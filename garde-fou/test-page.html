@@ -1,0 +1,43 @@
+<!doctype html>
+<!-- Copyright (C) 2026 Thomas Pourbaix
+     SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Minimal stand-in for CIC's "2/2 Passer un ordre" page, to run the order guard outside the bank's
+     site (tests/test_guard.py). Query string: isin, label, limit ("none" for a market order), side (Acheter|Vendre),
+     warning=1 for the bank's "écart de cours" banner. Prices come from data/oats.json next to it. -->
+<html lang="fr" data-guard-data-url="data/oats.json">
+<head>
+<meta charset="utf-8">
+<title>Page d'ordre (test)</title>
+<link rel="stylesheet" href="garde-fou.css">
+<style>body { font: 16px system-ui; max-width: 900px; margin: 24px auto; color: #111; } td { padding: 4px 12px; }</style>
+</head>
+<body>
+<h1>2/2 Passer un ordre</h1>
+<div id="warning">⚠ Ecart de cours important par rapport au cours connu à la saisie</div>
+<table>
+  <tr><th colspan="2">Caractéristiques de l'opération</th></tr>
+  <tr><td id="side"></td><td id="bond"></td></tr>
+  <tr><td>Pour un montant net estimatif de</td><td>0,99 EUR</td></tr>
+</table>
+<form id="order">
+  <button type="button">Modifier</button> <button type="button">Abandonner</button>
+  <button type="submit">Confirmer</button>
+</form>
+<p id="sent" hidden>ORDRE ENVOYÉ</p>
+<script>
+  const p = new URLSearchParams(location.search);
+  document.getElementById("side").textContent = p.get("side") || "Acheter";
+  const limit = p.get("limit") || "97,00";
+  document.getElementById("bond").innerText =
+    `1,00 EUR ${p.get("label") || "OAT 4%05-25042055"} (${p.get("isin") || "FR0010171975"})\n` +
+    `EURONEXT PARIS\n${limit === "none" ? "Au marché" : `A cours limité ( limite : ${limit} %)`}\nAu comptant`;
+  if (!p.has("warning")) document.getElementById("warning").remove();
+  document.getElementById("order").addEventListener("submit", (e) => {
+    e.preventDefault();
+    document.getElementById("sent").hidden = false;
+  });
+</script>
+<script src="check.js"></script>
+<script src="content.js"></script>
+</body>
+</html>
